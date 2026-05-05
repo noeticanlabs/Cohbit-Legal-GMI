@@ -61,6 +61,10 @@ bm.verify_bundle().expect("Audit Failure: Bundle Tampered");
 - [THREAT_MODEL.md](./THREAT_MODEL.md): Neutralizing the "citation goblin."
 - [DEMO.md](./DEMO.md): Step-by-step demonstration of kernel behaviors.
 
+## License
+
+Copyright (c) 2026 CohBit. All rights reserved. Proprietary and Confidential.
+
 ---
 
 *"CohBit Legal GMI: Because legal knowledge should be a ledger, not a guess."*
