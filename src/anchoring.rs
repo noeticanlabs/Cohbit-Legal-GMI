@@ -71,6 +71,9 @@ impl RootAnchor for LocalAnchorAdapter {
     }
 }
 
+/// GitAnchorAdapter is a SKELETAL PROTOTYPE that simulates anchoring roots into a Git repository.
+/// In this version, it performs internal state hashing to verify consistency but does not 
+/// yet invoke external git commands or commit objects.
 pub struct GitAnchorAdapter {
     pub repo_path: PathBuf,
 }

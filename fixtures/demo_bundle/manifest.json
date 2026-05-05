@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "chain_id": "demo_chain",
+  "latest_step_index": 1,
+  "latest_receipt_hash": "68a7a28483f047c6954a117fdb4b99d8022569a6a1e9ff36f2dbb80475e93c2b",
+  "latest_state_hash": "5049eb31abe944c361b73de99ed4d458967ff3faa29c74849d1be1b1841d0d15",
+  "root_commitment": "4b3bdd533fe741d93327588a5515256499885cc8be0ea40c48ac0ff343067b92"
+}

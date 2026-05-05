@@ -1,0 +1,14 @@
+{
+  "bundle_id": "44173818491baa471dba46988b030c00429822ff79ea298853cbbb5f5a645b5e",
+  "chain_id": "demo_chain",
+  "root_commitment": "4b3bdd533fe741d93327588a5515256499885cc8be0ea40c48ac0ff343067b92",
+  "exported_at": "2026-05-05T03:59:28.132424400+00:00",
+  "source_entries": [
+    {
+      "citation": "123 U.S. 456",
+      "source_id": "r1",
+      "text_hash": "275ecd9c20b68593b064c8f2f0830dba227b902cdc64e7026c222393fa0b721d",
+      "file_name": "3e689dc7534062c8a9dc92caa471be7451ac72460f568e7a8f8ea0c7b0d7099f.txt"
+    }
+  ]
+}

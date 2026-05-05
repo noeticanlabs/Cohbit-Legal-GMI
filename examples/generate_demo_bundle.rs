@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 fn main() -> anyhow::Result<()> {
-    let base_dir = Path::new("examples/demo_bundle_data");
-    let bundle_dir = Path::new("examples/demo_bundle_export");
+    let base_dir = Path::new("fixtures/demo_data");
+    let bundle_dir = Path::new("fixtures/demo_bundle");
 
     let pm = PersistenceManager::new(base_dir)?;
     

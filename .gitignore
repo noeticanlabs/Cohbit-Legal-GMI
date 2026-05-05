@@ -1,8 +1,22 @@
 /target
 /target_legal
 /target_legal_adapters_2
+Cargo.lock
+.env
+
+# Data and logs
+data/
+fixtures/demo_data/
+*.log
+
+# NDJSON and JSON (mostly trajectories and receipts)
+# We want to ignore most, but keep some examples/fixtures
 **/*.ndjson
 **/*.json
 !examples/*.json
-Cargo.lock
-.env
+!fixtures/demo_bundle/*.json
+!fixtures/demo_bundle/*.ndjson
+!lean/lakefile.toml
+!lean/lean-toolchain
+!package.json
+!package-lock.json
