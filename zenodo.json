@@ -1,0 +1,23 @@
+{
+  "title": "CohBit Legal GMI: Hardened Portable Legal Evidence Vault",
+  "description": "CohBit Legal GMI is a verifier-gated legal evidence vault that separates exploratory legal generation from committed legal state. Every recorded transition is source-bound, state-bound, energy-accounted, receipt-certified, machine-auditable, externally anchored, and exportable as a portable evidence bundle.",
+  "creators": [
+    {
+      "name": "Ellington, Michael",
+      "affiliation": "NoeticanLabs"
+    }
+  ],
+  "access_right": "restricted",
+  "license": "other-at",
+  "keywords": [
+    "legal-tech",
+    "blockchain",
+    "certified-computation",
+    "audit-trail",
+    "evidence-vault",
+    "rust",
+    "lean4"
+  ],
+  "upload_type": "software",
+  "version": "1.0.0-hardened"
+}

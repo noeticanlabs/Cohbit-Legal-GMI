@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Ellington"
+  given-names: "Michael"
+  affiliation: "NoeticanLabs"
+title: "CohBit Legal GMI: Hardened Portable Legal Evidence Vault"
+version: 1.0.0-hardened
+date-released: 2026-05-04
+url: "https://github.com/noeticanlabs/Cohbit-Legal-GMI"
+keywords:
+  - legal-tech
+  - certified-computation
+  - evidence-vault
+  - rust
+  - lean4
+abstract: >-
+  A verifier-gated legal evidence vault that separates exploratory legal generation from committed legal state. Every recorded transition is source-bound, state-bound, energy-accounted, receipt-certified, machine-auditable, externally anchored, and exportable as a portable evidence bundle.
