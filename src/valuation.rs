@@ -42,13 +42,13 @@ pub fn compute_delta_v(
         crate::claim::AuthorityLabel::Advisory => 0.3,
     };
 
-    // Base cost for commitment
-    let base_cost = 100.0;
+    // Coherence gain represents the reduction in uncertainty
+    let base_gain = 100.0;
     
-    // Penalties increase the cost (delta_v)
+    // Penalties reduce the coherence gain
     let mut penalty = (witness.contrary_authorities.len() as f64) * config.conflict_penalty_base;
 
-    // M6: Procedural Treatment Penalties
+    // M6: Procedural Treatment Penalties (reduce gain)
     if let Some(t) = &verifier_result.adapter_trace {
         if let Some(st) = &t.status_trace {
             for treatment in &st.contrary_treatment {
@@ -61,10 +61,10 @@ pub fn compute_delta_v(
         }
     }
 
-    // High support and high authority REDUCE the cost
-    let support_bonus = base_cost * base_support * authority_multiplier * config.authority_weight;
+    // High support and high authority increase the gain
+    let support_bonus = base_gain * base_support * authority_multiplier * config.authority_weight;
     
-    let delta = base_cost + penalty - support_bonus;
+    let gain = support_bonus - penalty;
 
-    delta as i128
+    gain as i128
 }

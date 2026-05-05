@@ -52,14 +52,14 @@ fn main() -> Result<()> {
         }
         Commands::Commit { witness, db } => {
             println!("Committing witness from: {} to {}", witness, db);
-            let pm = PersistenceManager::new(db)?;
+            let _pm = PersistenceManager::new(&db)?;
             // In a real scenario, we would load the manifold, apply the witness, 
             // and then append the receipt. For the CLI demo, we acknowledge the flow.
             println!("Persistence manager initialized. Ready for commitment.");
         }
         Commands::Inspect { db } => {
             println!("Inspecting legal manifold at: {}", db);
-            let pm = PersistenceManager::new(db)?;
+            let pm = PersistenceManager::new(&db)?;
             match pm.load_manifest() {
                 Ok(manifest) => {
                     println!("--- Chain Manifest ---");

@@ -211,7 +211,7 @@ fn check_c4(witness: &LegalWitness) -> CheckResult {
         if reference.jurisdiction.level == crate::reference::JurisdictionLevel::Supreme {
             CheckResult { passed: true, reason: "Supreme Court authority is globally valid".into() }
         } else {
-            CheckResult { passed: true, reason: "Jurisdictional alignment assumed".into() }
+            CheckResult { passed: true, reason: "[SKELETAL] Jurisdictional alignment assumed".into() }
         }
     } else {
         CheckResult { passed: false, reason: "No reference to check jurisdiction".into() }
@@ -280,8 +280,9 @@ fn check_c6(witness: &LegalWitness) -> CheckResult {
                 CheckResult { passed: false, reason: "Direct quotation requires quoted text (missing)".into() }
             }
         }
-        InferenceKind::RuleApplication { .. } => CheckResult { passed: true, reason: "Rule application inference assumed valid".into() },
-        _ => CheckResult { passed: true, reason: "Inference kind allowed".into() },
+        InferenceKind::RuleApplication { .. } => CheckResult { passed: true, reason: "[SKELETAL] Rule application inference assumed valid".into() },
+        InferenceKind::UnsupportedHypothesis => CheckResult { passed: false, reason: "Unsupported hypothesis cannot cross the commitment membrane".into() },
+        _ => CheckResult { passed: true, reason: "[SKELETAL] Inference kind allowed".into() },
     }
 }
 

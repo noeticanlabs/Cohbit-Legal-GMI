@@ -96,7 +96,7 @@ impl BundleManager {
                         }
                     }
                     if !source_found {
-                        // Note: In a real scenario, we might want to fail or warn if a source is missing.
+                        return Err(anyhow!("Missing source evidence for citation: {}", trace.citation));
                     }
                 }
             }
@@ -126,12 +126,34 @@ impl BundleManager {
         );
         fs::write(self.bundle_dir.join("audit_report.md"), report)?;
 
-        // 5. Generate Bundle Hash
-        // For simplicity, we hash the bundle manifest and the core manifest together.
-        let terminal_hash = stable_hash(&format!("{},{}", stable_hash(&bundle_manifest), manifest.root_commitment));
-        fs::write(self.bundle_dir.join("bundle_hash.txt"), terminal_hash)?;
+        // 5. Generate Bundle Hash (Binds all files)
+        let bundle_hash = self.compute_terminal_bundle_hash()?;
+        fs::write(self.bundle_dir.join("bundle_hash.txt"), bundle_hash)?;
 
         Ok(())
+    }
+
+    fn compute_terminal_bundle_hash(&self) -> Result<String> {
+        let mut hasher = blake3::Hasher::new();
+        let files = ["manifest.json", "receipts.ndjson", "traces.ndjson", "anchor_receipts.ndjson", "source_manifest.json"];
+        for f in files {
+            let p = self.bundle_dir.join(f);
+            if p.exists() {
+                let data = fs::read(&p)?;
+                hasher.update(&data);
+            }
+        }
+        // Also bind the source files
+        let sources_dir = self.bundle_dir.join("sources");
+        if sources_dir.exists() {
+            let mut entries: Vec<_> = fs::read_dir(sources_dir)?.collect::<Result<Vec<_>, _>>()?;
+            entries.sort_by_key(|e| e.file_name()); // Canonical order
+            for entry in entries {
+                let data = fs::read(entry.path())?;
+                hasher.update(&data);
+            }
+        }
+        Ok(hasher.finalize().to_hex().to_string())
     }
 
     pub fn verify_bundle(&self) -> Result<()> {
@@ -151,9 +173,9 @@ impl BundleManager {
 
         // 1. Verify Terminal Hash
         let terminal_hash = fs::read_to_string(bundle_hash_path)?;
-        let expected_hash = stable_hash(&format!("{},{}", stable_hash(&bundle_manifest), manifest.root_commitment));
+        let expected_hash = self.compute_terminal_bundle_hash()?;
         if terminal_hash != expected_hash {
-            return Err(anyhow!("Bundle terminal hash mismatch"));
+            return Err(anyhow!("Bundle terminal hash mismatch (Bundle Tampered)"));
         }
 
         // 2. Verify Source Integrity
@@ -168,7 +190,30 @@ impl BundleManager {
             }
         }
 
-        // 3. Persistence Integrity Check
+        // 3. Verify Anchors
+        let anchors_path = self.bundle_dir.join("anchor_receipts.ndjson");
+        if anchors_path.exists() {
+            let file = File::open(anchors_path)?;
+            let reader = BufReader::new(file);
+            let mut last_anchor = None;
+            for line in reader.lines() {
+                let line = line?;
+                let anchor: crate::anchoring::AnchorReceipt = serde_json::from_str(&line)?;
+                last_anchor = Some(anchor);
+            }
+            if let Some(anchor) = last_anchor {
+                if anchor.root_commitment != manifest.root_commitment {
+                    return Err(anyhow!("Anchor mismatch: Root commitment does not match anchor log"));
+                }
+                if anchor.manifest_hash != stable_hash(&manifest) {
+                    return Err(anyhow!("Anchor mismatch: Manifest hash does not match anchor log"));
+                }
+            } else {
+                 return Err(anyhow!("Anchor log exists but contains no receipts"));
+            }
+        }
+
+        // 4. Persistence Integrity Check
         let pm = PersistenceManager { base_dir: self.bundle_dir.clone() };
         pm.verify_integrity()?;
 

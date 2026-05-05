@@ -103,7 +103,7 @@ mod tests {
                 citation: Some("Case 1".into()),
                 quoted_text: None,
                 authority_label: AuthorityLabel::Persuasive, 
-                inference: InferenceKind::UnsupportedHypothesis,
+                inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
                 model_confidence: 1.0,
             }],
         };
@@ -220,7 +220,7 @@ mod tests {
                 cited_reference: Some(ReferenceId("r1".into())),
                 quoted_text: None,
                 authority_label: AuthorityLabel::Binding,
-                inference: InferenceKind::UnsupportedHypothesis,
+                inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
             },
             cited_reference: Some(reference),
             support_score: Some(1.0),
@@ -259,7 +259,7 @@ mod tests {
                 cited_reference: Some(ReferenceId("r1".into())),
                 quoted_text: None,
                 authority_label: AuthorityLabel::Persuasive,
-                inference: InferenceKind::UnsupportedHypothesis,
+                inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
             },
             cited_reference: Some(reference),
             support_score: Some(0.5),
@@ -299,7 +299,7 @@ mod tests {
         };
 
         let witness = LegalWitness {
-            proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: None, authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::UnsupportedHypothesis },
+            proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: None, authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] } },
             cited_reference: Some(reference), support_score: Some(0.5), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
         };
 
@@ -400,10 +400,10 @@ mod tests {
         let source_path = bundle_dir.join("sources").join(&bundle_manifest.source_entries[0].file_name);
         fs::write(source_path, "TAMPERED CONTENT").unwrap();
 
-        // Verify should FAIL
+        // Verify should FAIL (due to terminal bundle hash mismatch)
         let result = bm.verify_bundle();
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Source integrity failure"));
+        assert!(result.unwrap_err().to_string().contains("Bundle terminal hash mismatch"));
 
         fs::remove_dir_all(temp_base).unwrap();
     }

@@ -57,7 +57,8 @@ impl LegalReceipt {
 }
 
 pub fn stable_hash<T: serde::Serialize>(t: &T) -> String {
-    let json = serde_json::to_string(t).unwrap_or_default();
+    let value = serde_json::to_value(t).unwrap_or(serde_json::Value::Null);
+    let json = serde_json::to_string(&value).unwrap_or_default();
     let hash = blake3::hash(json.as_bytes());
     hash.to_hex().to_string()
 }

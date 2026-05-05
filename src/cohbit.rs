@@ -29,10 +29,11 @@ pub fn apply(
         // Atomic state transition
         manifold.claims.push(witness.proposed_claim.clone());
         
-        // Handle u128 -= i64 with safety check
+        // Coherence gain reduces the valuation (uncertainty)
         if result.valuation_delta >= 0 {
             manifold.valuation = manifold.valuation.saturating_sub(result.valuation_delta as u128);
         } else {
+            // Negative coherence gain (net penalty) increases valuation (uncertainty)
             manifold.valuation = manifold.valuation.saturating_add(result.valuation_delta.abs() as u128);
         }
 
@@ -73,16 +74,36 @@ pub fn apply(
 
         Ok((manifold, LegalCohBit { receipt, verifier_result: result }))
     } else {
-        // Transition rejected: manifold remains unchanged
+        // Transition rejected: manifold state remains mostly unchanged (valuation/claims frozen),
+        // but we still increment step_index and emit a unique rejection trace/receipt.
+        manifold.step_index += 1;
+        let receipt_hash = manifold.compute_receipt_hash(&witness, &result);
+        manifold.last_receipt_hash = Some(receipt_hash.clone());
+
+        let trace = TransitionTrace {
+            step_index: manifold.step_index,
+            decision: VerificationDecision::Reject,
+            pre_state_hash: pre_state_hash.clone(),
+            post_state_hash: pre_state_hash.clone(), // No state change on reject
+            prev_receipt_hash: last_receipt_hash.clone(),
+            receipt_hash: receipt_hash.clone(),
+            delta_v: result.valuation_delta,
+            spend,
+            defect: result.defect_reserve,
+            valuation_pre: valuation_pre as i64,
+            valuation_post: valuation_pre as i64, // No valuation change on reject
+            adapter_trace: result.adapter_trace.clone(),
+        };
+
         let receipt = LegalReceipt::new(
-            ReceiptHash("rejected".into()),
+            receipt_hash,
             pre_state_hash.clone(),
             pre_state_hash,
             last_receipt_hash,
             VerificationDecision::Reject,
             manifold.step_index,
             manifold.valuation as i64,
-            None,
+            Some(trace),
         );
         Ok((manifold, LegalCohBit { receipt, verifier_result: result }))
     }

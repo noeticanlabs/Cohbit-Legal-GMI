@@ -161,6 +161,13 @@ impl PersistenceManager {
             return Ok("genesis".into());
         }
 
+        let trace_log_path = self.base_dir.join("traces.ndjson");
+        let mut trace_reader = if trace_log_path.exists() {
+            Some(BufReader::new(fs::File::open(trace_log_path)?).lines())
+        } else {
+            None
+        };
+
         let file = fs::File::open(log_path)?;
         let reader = BufReader::new(file);
 
@@ -168,6 +175,7 @@ impl PersistenceManager {
         let mut last_step = 0;
         let mut last_rho: Option<String> = None;
         let mut last_state = String::new();
+        let mut last_record: Option<ReceiptLogRecord> = None;
 
         for (i, line) in reader.lines().enumerate() {
             let line = line?;
@@ -194,16 +202,39 @@ impl PersistenceManager {
                 }
             }
 
-            current_root = record.root_commitment;
+            // 3. Trace Verification
+            if let (Some(trace_hash), Some(reader)) = (&record.trace_hash, &mut trace_reader) {
+                if let Some(trace_line) = reader.next() {
+                    let trace_line = trace_line?;
+                    // We don't parse the whole trace here for speed, just hash the raw line (after stripping whitespace)
+                    let recomputed_trace_hash = stable_hash(&serde_json::from_str::<serde_json::Value>(&trace_line)?);
+                    if recomputed_trace_hash != *trace_hash {
+                        return Err(anyhow!("Trace hash mismatch at step {}", record.step_index));
+                    }
+                } else {
+                    return Err(anyhow!("Missing trace entry for step {}", record.step_index));
+                }
+            }
+
+            current_root = record.root_commitment.clone();
             last_step = record.step_index;
             last_rho = Some(record.receipt_hash.clone());
             last_state = record.post_state_hash.clone();
+            last_record = Some(record);
         }
 
         // Verify against manifest
         let manifest = self.load_manifest()?;
         if manifest.root_commitment != current_root {
             return Err(anyhow!("Manifest root commitment mismatch with log"));
+        }
+
+        if let Some(last) = last_record {
+            if manifest.latest_step_index != last.step_index ||
+               manifest.latest_receipt_hash != Some(last.receipt_hash) ||
+               manifest.latest_state_hash != last.post_state_hash {
+                return Err(anyhow!("Manifest terminal fields do not match last log record"));
+            }
         }
 
         Ok(current_root)

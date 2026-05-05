@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -12,10 +12,10 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalManifold {
     pub claims: Vec<LegalClaim>,
-    pub references: HashMap<ReferenceId, LegalReference>,
+    pub references: BTreeMap<ReferenceId, LegalReference>,
     pub jurisdiction_graph: Vec<JurisdictionEdge>,
     pub procedural_posture: ProceduralPosture,
-    pub evidence: HashMap<EvidenceId, EvidenceItem>,
+    pub evidence: BTreeMap<EvidenceId, EvidenceItem>,
     
     // Core Physics
     pub valuation: u128,
@@ -27,6 +27,17 @@ pub struct LegalManifold {
 
     #[serde(skip)]
     pub knowledge_trajectory: Vec<ReceiptHash>,
+}
+
+/// A canonical view of the manifold's committed state for hashing
+#[derive(Serialize)]
+struct ManifoldCommitmentView<'a> {
+    claims: &'a Vec<LegalClaim>,
+    references: &'a BTreeMap<ReferenceId, LegalReference>,
+    valuation: u128,
+    step_index: u64,
+    last_receipt_hash: &'a Option<ReceiptHash>,
+    procedural_posture: &'a ProceduralPosture,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -62,10 +73,10 @@ impl LegalManifold {
     pub fn new(procedural_posture: ProceduralPosture) -> Self {
         Self {
             claims: Vec::new(),
-            references: HashMap::new(),
+            references: BTreeMap::new(),
             jurisdiction_graph: Vec::new(),
             procedural_posture,
-            evidence: HashMap::new(),
+            evidence: BTreeMap::new(),
             valuation: 1000000,
             step_index: 0,
             pre_state_hash: StateHash("genesis".to_string()),
@@ -76,7 +87,15 @@ impl LegalManifold {
     }
 
     pub fn get_state_hash(&self) -> StateHash {
-        let json = serde_json::to_string(&self.claims).unwrap_or_default();
+        let view = ManifoldCommitmentView {
+            claims: &self.claims,
+            references: &self.references,
+            valuation: self.valuation,
+            step_index: self.step_index,
+            last_receipt_hash: &self.last_receipt_hash,
+            procedural_posture: &self.procedural_posture,
+        };
+        let json = serde_json::to_string(&view).unwrap_or_default();
         StateHash(blake3::hash(json.as_bytes()).to_hex().to_string())
     }
 
