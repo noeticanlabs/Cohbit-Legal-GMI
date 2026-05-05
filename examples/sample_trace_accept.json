@@ -1,0 +1,13 @@
+{
+  "step_index": 7,
+  "decision": "Accept",
+  "pre_state_hash": "abc",
+  "post_state_hash": "def",
+  "prev_receipt_hash": "prev123",
+  "receipt_hash": "rho456",
+  "delta_v": 80,
+  "spend": 10,
+  "defect": 0,
+  "valuation_pre": 999100,
+  "valuation_post": 999020
+}

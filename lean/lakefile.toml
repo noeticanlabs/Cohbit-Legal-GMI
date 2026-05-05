@@ -1,0 +1,10 @@
+name = "lean_kernel"
+version = "0.1.0"
+defaultTargets = ["lean_kernel"]
+
+[[lean_lib]]
+name = "LeanKernel"
+
+[[lean_exe]]
+name = "lean_kernel"
+root = "Main"

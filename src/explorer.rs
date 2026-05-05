@@ -1,0 +1,41 @@
+use serde::{Deserialize, Serialize};
+use crate::proposal::{LegalProposal, CandidateClaim};
+use std::collections::VecDeque;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExplorationSpace {
+    pub active_proposals: Vec<LegalProposal>,
+    pub candidate_queue: VecDeque<CandidateClaim>,
+    pub accepted_claims_ids: Vec<String>,
+    pub rejected_claims_ids: Vec<String>,
+}
+
+impl ExplorationSpace {
+    pub fn new() -> Self {
+        Self {
+            active_proposals: vec![],
+            candidate_queue: VecDeque::new(),
+            accepted_claims_ids: vec![],
+            rejected_claims_ids: vec![],
+        }
+    }
+
+    pub fn inject_proposal(&mut self, proposal: LegalProposal) {
+        for candidate in &proposal.candidate_claims {
+            self.candidate_queue.push_back(candidate.clone());
+        }
+        self.active_proposals.push(proposal);
+    }
+
+    pub fn pop_candidate(&mut self) -> Option<CandidateClaim> {
+        self.candidate_queue.pop_front()
+    }
+
+    pub fn record_decision(&mut self, text: &str, accepted: bool) {
+        if accepted {
+            self.accepted_claims_ids.push(text.to_string());
+        } else {
+            self.rejected_claims_ids.push(text.to_string());
+        }
+    }
+}
