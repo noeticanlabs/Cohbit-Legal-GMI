@@ -8,6 +8,9 @@ pub struct LegalReference {
     pub jurisdiction: Jurisdiction,
     pub source_text: Option<String>,
     pub procedural_status: ProceduralStatus,
+    pub citation_confidence: Option<String>, // RFAP: Stored as string for deterministic BigRational
+    pub counsel_id: Option<String>,
+    pub law_firm_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,4 +38,34 @@ pub enum ProceduralStatus {
     Reversed,
     Superseded,
     Unknown,
+}
+impl Default for Jurisdiction {
+    fn default() -> Self {
+        Self {
+            court: "Unknown".into(),
+            region: "Unknown".into(),
+            level: JurisdictionLevel::Unknown,
+        }
+    }
+}
+
+impl Default for ProceduralStatus {
+    fn default() -> Self {
+        ProceduralStatus::Unknown
+    }
+}
+
+impl Default for LegalReference {
+    fn default() -> Self {
+        Self {
+            id: crate::ReferenceId("default".into()),
+            citation: "Unknown".into(),
+            jurisdiction: Jurisdiction::default(),
+            source_text: None,
+            procedural_status: ProceduralStatus::default(),
+            citation_confidence: None,
+            counsel_id: None,
+            law_firm_id: None,
+        }
+    }
 }

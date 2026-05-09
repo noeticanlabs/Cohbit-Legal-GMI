@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use crate::valuation::{ValuationConfig, ValuationMode};
+    use crate::valuation::ValuationConfig;
+    use num_rational::BigRational;
+    use num_traits::FromPrimitive;
     use crate::adapter::{MockLegalStatusAdapter, TreatmentRecord, TreatmentType};
     use crate::proposal::{LegalProposal, CandidateClaim};
     use crate::npe::{LegalNpe, SyntheticLegalNpe};
@@ -63,6 +65,9 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Actual text".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         });
         let adapter = MockLegalStatusAdapter {
             status_overrides: HashMap::new(),
@@ -71,12 +76,87 @@ mod tests {
             reference_store: refs,
         };
 
-        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, 0, Some(&adapter));
+        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter));
 
         assert!(results[0].is_ok());
         let cohbit = results[0].as_ref().unwrap();
         assert_eq!(cohbit.receipt.decision, VerificationDecision::Reject);
         assert_eq!(manifold.claims.len(), 0); 
+    }
+
+    #[test]
+    fn test_parse_rational_roundtrip() {
+        use crate::valuation::parse_rational;
+        
+        let cases = vec![
+            ("100", BigRational::from_i64(100).unwrap()),
+            ("142.5", BigRational::new(285.into(), 2.into())),
+            ("285/2", BigRational::new(285.into(), 2.into())),
+            ("-0.5", BigRational::new((-1).into(), 2.into())),
+            ("-1/2", BigRational::new((-1).into(), 2.into())),
+            ("0", BigRational::from_i64(0).unwrap()),
+            (" 100 ", BigRational::from_i64(100).unwrap()), // Trim
+        ];
+
+        for (input, expected) in cases {
+            assert_eq!(parse_rational(input), expected, "Failed case: {}", input);
+        }
+    }
+
+    #[test]
+    fn test_state_continuity_multi_step() {
+        let manifold = setup_manifold();
+        let config = setup_config();
+        
+        let ref1 = LegalReference {
+            id: ReferenceId("r1".into()),
+            citation: "Case 1".into(),
+            jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
+            source_text: Some("Text 1".into()),
+            procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
+        };
+        let witness1 = LegalWitness {
+            proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: None, authority_label: AuthorityLabel::Binding, inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] } },
+            cited_reference: Some(ref1), support_score: Some("1".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], review_status: None,
+        };
+
+        // Step 1: Accept
+        let (manifold_s1, cohbit1) = apply(manifold.clone(), witness1, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None).unwrap();
+        assert_eq!(cohbit1.receipt.decision, VerificationDecision::Accept);
+        assert_eq!(cohbit1.receipt.pre_state_hash, manifold.get_state_hash());
+        assert_eq!(cohbit1.receipt.post_state_hash, manifold_s1.get_state_hash());
+
+        // Step 2: Reject
+        let ref2 = LegalReference {
+            id: ReferenceId("r2".into()),
+            citation: "Case 2".into(),
+            jurisdiction: Jurisdiction { court: "Appellate".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
+            source_text: Some("Text 2".into()),
+            procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
+        };
+        let witness2 = LegalWitness {
+            proposed_claim: LegalClaim { id: ClaimId("c2".into()), text: "Y".into(), cited_reference: Some(ReferenceId("r2".into())), quoted_text: Some("MISSING".into()), authority_label: AuthorityLabel::Binding, inference: InferenceKind::DirectQuotation },
+            cited_reference: Some(ref2), support_score: Some("1".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], review_status: None,
+        };
+
+        let (manifold_s2, cohbit2) = apply(manifold_s1.clone(), witness2, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None).unwrap();
+        assert_eq!(cohbit2.receipt.decision, VerificationDecision::Reject);
+        
+        // Continuity checks
+        assert_eq!(cohbit2.receipt.pre_state_hash, cohbit1.receipt.post_state_hash);
+        assert_eq!(cohbit2.receipt.post_state_hash, cohbit2.receipt.pre_state_hash); // Reject is idempotent
+        assert_eq!(manifold_s2.get_state_hash(), manifold_s1.get_state_hash()); // State didn't change
+        
+        // Ledger metadata DID change
+        assert_eq!(manifold_s2.step_index, manifold_s1.step_index + 1);
+        assert!(manifold_s2.last_receipt_hash.is_some());
+        assert_ne!(manifold_s2.last_receipt_hash, manifold_s1.last_receipt_hash);
     }
 
     #[test]
@@ -116,6 +196,9 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Content".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         });
         let adapter = MockLegalStatusAdapter {
             status_overrides: HashMap::new(),
@@ -124,7 +207,7 @@ mod tests {
             reference_store: refs,
         };
 
-        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, 0, Some(&adapter));
+        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter));
 
         for res in results {
             if let Ok(cohbit) = res {
@@ -168,6 +251,9 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Target Text exists here.".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         });
         let adapter = MockLegalStatusAdapter {
             status_overrides: HashMap::new(),
@@ -176,7 +262,7 @@ mod tests {
             reference_store: refs,
         };
 
-        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, 0, Some(&adapter));
+        let results = CommitmentMembrane::try_commit(&mut manifold, &mut explorer, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter));
 
         assert!(results[0].is_ok());
         assert_eq!(results[0].as_ref().unwrap().receipt.decision, VerificationDecision::Accept);
@@ -193,6 +279,7 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Appellate".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
             source_text: Some("Content".into()),
             procedural_status: ProceduralStatus::GoodLaw, 
+            ..Default::default()
         };
 
         let mut refs = HashMap::new();
@@ -227,9 +314,10 @@ mod tests {
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![],
+            review_status: None,
         };
 
-        let (_, cohbit) = apply(manifold, witness, &config, 0, Some(&adapter)).unwrap();
+        let (_, cohbit) = apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter)).unwrap();
         assert_eq!(cohbit.receipt.decision, VerificationDecision::Reject);
     }
 
@@ -250,6 +338,9 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Content".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         };
 
         let witness = LegalWitness {
@@ -266,9 +357,10 @@ mod tests {
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![],
+            review_status: None,
         };
 
-        let (_, cohbit) = apply(manifold, witness, &config, 0, None).unwrap();
+        let (_, cohbit) = apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None).unwrap();
         assert_eq!(cohbit.receipt.decision, VerificationDecision::Accept);
         
         let manifest = pm.append_receipt(&cohbit.receipt).unwrap();
@@ -296,14 +388,17 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Content".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         };
 
         let witness = LegalWitness {
             proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: None, authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] } },
-            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], review_status: None,
         };
 
-        let (_, cohbit) = apply(manifold, witness, &config, 0, None).unwrap();
+        let (_, cohbit) = apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None).unwrap();
         pm.append_receipt(&cohbit.receipt).unwrap();
 
         // Tamper with the log (receipt_hash)
@@ -367,6 +462,9 @@ mod tests {
             jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
             source_text: Some("Evidence Substrate Content".into()),
             procedural_status: ProceduralStatus::GoodLaw,
+        citation_confidence: None,
+        counsel_id: None,
+        law_firm_id: None,
         };
         let mut refs = HashMap::new();
         refs.insert("Case 1".to_string(), reference.clone());
@@ -379,12 +477,16 @@ mod tests {
 
         let witness = LegalWitness {
             proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: Some("Evidence".into()), authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::DirectQuotation },
-            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], review_status: None,
         };
 
         // Create a transition with a trace
-        let (_, cohbit) = apply(initial_manifold, witness, &config, 0, Some(&adapter)).unwrap();
-        pm.append_receipt(&cohbit.receipt).unwrap();
+        let (_, cohbit) = apply(initial_manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter)).unwrap();
+        let updated_manifest = pm.append_receipt(&cohbit.receipt).unwrap();
+
+        // Add an anchor (Required for non-genesis bundles in hardened mode)
+        let anchor_adapter = crate::anchoring::LocalAnchorAdapter::new(&pm_dir).unwrap();
+        anchor_adapter.anchor_root(&updated_manifest).unwrap();
 
         // Export bundle
         let bm = BundleManager::new(&bundle_dir);

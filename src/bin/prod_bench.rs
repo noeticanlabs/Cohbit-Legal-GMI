@@ -7,6 +7,8 @@ use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
 use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
 use std::collections::HashMap;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     println!("CohBit Legal GMI: Production-Grade Benchmarking Suite");
@@ -42,14 +44,14 @@ fn run_performance_test(iterations: usize) -> anyhow::Result<Vec<u128>> {
     let config = setup_config();
     let mut refs = HashMap::new();
     refs.insert("Case".into(), LegalReference {
-        id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Text".into()), procedural_status: ProceduralStatus::GoodLaw,
+        id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Text".into()), procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
     });
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
 
     let mut latencies = Vec::with_capacity(iterations);
     for _ in 0..iterations {
         let start = Instant::now();
-        let _ = cohbit::apply(manifold.clone(), witness.clone(), &config, 0, Some(&adapter))?;
+        let _ = cohbit::apply(manifold.clone(), witness.clone(), &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
         latencies.push(start.elapsed().as_micros());
     }
     Ok(latencies)
@@ -63,7 +65,7 @@ fn run_defense_test() -> anyhow::Result<f64> {
     // Attack: Hallucination
     let mut refs = HashMap::new();
     refs.insert("Case".into(), LegalReference {
-        id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Real Text".into()), procedural_status: ProceduralStatus::GoodLaw,
+        id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Real Text".into()), procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
     });
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
     
@@ -74,7 +76,7 @@ fn run_defense_test() -> anyhow::Result<f64> {
         ..setup_empty_witness()
     };
 
-    let result = cohbit::apply(manifold, witness, &config, 0, Some(&adapter))?;
+    let result = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     if result.1.receipt.decision == VerificationDecision::Reject {
         Ok(1.0)
     } else {
@@ -102,7 +104,7 @@ fn setup_jurisdiction() -> Jurisdiction {
 fn setup_witness() -> LegalWitness {
     LegalWitness {
         proposed_claim: LegalClaim { id: ClaimId("c".into()), text: "Text".into(), cited_reference: Some(ReferenceId("r".into())), quoted_text: Some("Text".into()), authority_label: AuthorityLabel::Binding, inference: InferenceKind::DirectQuotation },
-        cited_reference: Some(LegalReference { id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Text".into()), procedural_status: ProceduralStatus::GoodLaw }),
+        cited_reference: Some(LegalReference { id: ReferenceId("r".into()), citation: "Case".into(), jurisdiction: setup_jurisdiction(), source_text: Some("Text".into()), procedural_status: ProceduralStatus::GoodLaw, ..Default::default() }),
         support_score: Some("1".to_string()),
         ..setup_empty_witness()
     }
@@ -118,7 +120,6 @@ fn setup_strict_config() -> VerificationConfig {
 
 fn setup_empty_witness() -> LegalWitness {
     LegalWitness {
-        proposed_claim: LegalClaim { id: ClaimId("stub".into()), text: "".into(), cited_reference: None, quoted_text: None, authority_label: AuthorityLabel::Advisory, inference: InferenceKind::UnsupportedHypothesis },
-        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], ..Default::default()
     }
 }

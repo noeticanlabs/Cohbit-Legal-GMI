@@ -11,11 +11,12 @@ pub struct TransitionTrace {
     pub prev_receipt_hash: Option<ReceiptHash>,
     pub receipt_hash: ReceiptHash,
     pub delta_v: String,
-    pub spend: i64,
+    pub spend: String,
     pub defect: String,
     pub valuation_pre: String,
     pub valuation_post: String,
     pub adapter_trace: Option<crate::adapter::AdapterTrace>,
+    pub witness: crate::witness::LegalWitness,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,9 +60,8 @@ impl LegalReceipt {
 pub fn stable_hash<T: serde::Serialize>(t: &T) -> String {
     // RFAP-04: Determinism First. 
     // Ensure canonical JSON by converting to Value and back to String.
-    // serde_json sorts keys of Maps alphabetically by default when serializing to string.
-    let value = serde_json::to_value(t).unwrap_or(serde_json::Value::Null);
-    let json = serde_json::to_string(&value).expect("Deterministic serialization failed");
+    let value = serde_json::to_value(t).expect("Stable hash: Serialization to Value failed");
+    let json = serde_json::to_string(&value).expect("Stable hash: Deterministic serialization failed");
     let hash = blake3::hash(json.as_bytes());
     hash.to_hex().to_string()
 }

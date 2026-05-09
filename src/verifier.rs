@@ -1,15 +1,13 @@
 use serde::{Deserialize, Serialize};
 use crate::{
-    manifold::LegalManifold,
     witness::LegalWitness,
     claim::InferenceKind,
     reference::ProceduralStatus,
-    valuation::{ValuationConfig, compute_delta_v},
-    adapter::{LegalSourceAdapter, AdapterTrace, QuoteSpan, StatusTrace, TreatmentType},
+    valuation::{ValuationConfig, compute_delta_v, parse_rational},
+    adapter::{LegalSourceAdapter, AdapterTrace, QuoteSpan, TreatmentType},
     receipt::stable_hash,
 };
 use num_rational::BigRational;
-use num_traits::FromPrimitive;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationConfig {
@@ -21,7 +19,7 @@ pub struct VerificationConfig {
 
 impl VerificationConfig {
     pub fn support_threshold_rat(&self) -> BigRational {
-        crate::valuation::parse_decimal(&self.support_threshold)
+        parse_rational(&self.support_threshold)
     }
 }
 
@@ -42,10 +40,10 @@ pub struct VerifierResult {
 
 impl VerifierResult {
     pub fn valuation_delta_rat(&self) -> BigRational {
-        crate::valuation::parse_decimal(&self.valuation_delta)
+        parse_rational(&self.valuation_delta)
     }
     pub fn defect_reserve_rat(&self) -> BigRational {
-        crate::valuation::parse_decimal(&self.defect_reserve)
+        parse_rational(&self.defect_reserve)
     }
 }
 

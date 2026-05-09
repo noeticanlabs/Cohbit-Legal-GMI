@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use crate::proposal::{LegalProposal, CandidateClaim};
 use crate::claim::{AuthorityLabel, InferenceKind};
 use crate::error::GmiError;

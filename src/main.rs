@@ -1,8 +1,10 @@
 use clap::{Parser, Subcommand};
 use cohbit_legal_gmi::persistence::PersistenceManager;
 use cohbit_legal_gmi::manifold::LegalManifold;
-use cohbit_legal_gmi::ReceiptHash;
+// Removed unused import
 use anyhow::Result;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 #[derive(Parser)]
 #[command(name = "cohbit-legal-gmi")]
@@ -84,7 +86,7 @@ fn main() -> Result<()> {
                 valuation_config: cohbit_legal_gmi::valuation::ValuationConfig::default(),
             };
 
-            let (_, cohbit) = cohbit_legal_gmi::cohbit::apply(manifold, witness, &config, 0, None)?;
+            let (_, cohbit) = cohbit_legal_gmi::cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None)?;
             let manifest = pm.append_receipt(&cohbit.receipt)?;
             println!("Commit successful. Step Index: {}", manifest.latest_step_index);
             println!("Root Commitment: {}", manifest.root_commitment);

@@ -10,6 +10,8 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LegalBenchEntry {
@@ -61,7 +63,7 @@ fn main() -> anyhow::Result<()> {
             citation: citation.clone(),
             jurisdiction: Jurisdiction { court: "US Federal".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
             source_text: Some(format!("Reference text for {}: {}", citation, entry.text)),
-            procedural_status: ProceduralStatus::GoodLaw,
+            procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
         };
         refs.insert(citation.clone(), reference.clone());
 
@@ -93,6 +95,7 @@ fn main() -> anyhow::Result<()> {
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![format!("Task: {}", entry.task)],
+            ..Default::default()
         };
 
         // 4. Verification Config
@@ -104,7 +107,7 @@ fn main() -> anyhow::Result<()> {
         };
 
         // 5. Apply
-        match cohbit::apply(manifold, witness, &config, 0, Some(&adapter)) {
+        match cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter)) {
             Ok((_, cohbit)) => {
                 if cohbit.receipt.decision == VerificationDecision::Accept {
                     accepted += 1;

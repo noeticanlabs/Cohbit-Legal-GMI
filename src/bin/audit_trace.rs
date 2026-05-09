@@ -64,19 +64,18 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-use cohbit_legal_gmi::valuation::parse_decimal;
-use num_rational::BigRational;
-use num_traits::FromPrimitive;
+use cohbit_legal_gmi::valuation::parse_rational;
+// Removed unused imports
 
 fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -> Result<()> {
     println!("Auditing Step {}: {:?}", trace.step_index, trace.decision);
     let mut issues = Vec::new();
 
-    let delta_v = parse_decimal(&trace.delta_v);
-    let defect = parse_decimal(&trace.defect);
-    let spend_rat = BigRational::from_i64(trace.spend).unwrap();
-    let val_pre = parse_decimal(&trace.valuation_pre);
-    let val_post = parse_decimal(&trace.valuation_post);
+    let delta_v = parse_rational(&trace.delta_v);
+    let defect = parse_rational(&trace.defect);
+    let spend_rat = parse_rational(&trace.spend);
+    let val_pre = parse_rational(&trace.valuation_pre);
+    let val_post = parse_rational(&trace.valuation_post);
 
     // 1. Logic Audit
     match trace.decision {
@@ -146,7 +145,7 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
             }
         }
 
-        let val_prev_post = parse_decimal(&prev.valuation_post);
+        let val_prev_post = parse_rational(&prev.valuation_post);
         if val_pre != val_prev_post {
             issues.push(format!(
                 "Valuation Chain Discontinuity: current valuation_pre ({}) != prev valuation_post ({})",

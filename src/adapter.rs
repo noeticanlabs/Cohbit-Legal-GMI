@@ -155,6 +155,9 @@ impl LegalSourceAdapter for LocalPdfSourceAdapter {
                 },
                 source_text: None,
                 procedural_status: ProceduralStatus::GoodLaw,
+                citation_confidence: None,
+                counsel_id: None,
+                law_firm_id: None,
             })
         } else {
             Err(AdapterError::ReferenceNotFound(citation.to_string()))

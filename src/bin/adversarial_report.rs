@@ -6,6 +6,8 @@ use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
 use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
 use std::collections::HashMap;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     println!("CohBit Legal GMI: Adversarial Attack & Defense Report");
@@ -27,7 +29,7 @@ fn main() -> anyhow::Result<()> {
         citation: "389 U.S. 347".into(),
         jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
         source_text: Some("Actual text of Katz v. United States...".into()),
-        procedural_status: ProceduralStatus::GoodLaw,
+        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
     });
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
     
@@ -45,7 +47,7 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let result = cohbit::apply(manifold, witness, &setup_strict_config(), 0, Some(&adapter))?;
+    let result = cohbit::apply(manifold, witness, &setup_strict_config(), BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     if result.1.receipt.decision == VerificationDecision::Reject {
         println!("[DEFENDED] Verifier rejected hallucinated quote: {:?}\n", result.1.verifier_result.c2_citation_binding.reason);
         success_count += 1;
@@ -65,7 +67,7 @@ fn main() -> anyhow::Result<()> {
         citation: "Old Case".into(),
         jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
         source_text: Some("This rule is now invalid.".into()),
-        procedural_status: ProceduralStatus::Overruled,
+        procedural_status: ProceduralStatus::Overruled, ..Default::default()
     });
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
     
@@ -83,7 +85,7 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let result = cohbit::apply(manifold, witness, &setup_strict_config(), 0, Some(&adapter))?;
+    let result = cohbit::apply(manifold, witness, &setup_strict_config(), BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     if result.1.receipt.decision == VerificationDecision::Reject {
         println!("[DEFENDED] Verifier rejected overruled precedent: {:?}\n", result.1.verifier_result.c5_procedural_status.reason);
         success_count += 1;
@@ -103,7 +105,7 @@ fn main() -> anyhow::Result<()> {
         citation: "Good Case".into(),
         jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
         source_text: Some("Valid text.".into()),
-        procedural_status: ProceduralStatus::GoodLaw,
+        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
     });
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
     
@@ -125,7 +127,7 @@ fn main() -> anyhow::Result<()> {
     let mut config = setup_strict_config();
     config.support_threshold = "0.9".into();
 
-    let result = cohbit::apply(manifold, witness, &config, 0, Some(&adapter))?;
+    let result = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     if result.1.receipt.decision == VerificationDecision::Reject {
         println!("[DEFENDED] Verifier rejected claim with insufficient support (Stability Law): {:?}\n", result.1.verifier_result.c3_claim_source_alignment.reason);
         success_count += 1;
@@ -170,9 +172,6 @@ fn setup_empty_witness() -> LegalWitness {
             inference: InferenceKind::UnsupportedHypothesis,
         },
         cited_reference: None,
-        support_score: None,
-        contrary_authorities: vec![],
-        user_asserted_good_law: None,
-        verifier_notes: vec![],
+        verifier_notes: vec![], ..Default::default()
     }
 }

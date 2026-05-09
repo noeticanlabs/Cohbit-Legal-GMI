@@ -39,6 +39,15 @@ The kernel guarantees that no claim commits unless it survives the **Admissibili
 | M12 | Portable Evidence Bundle | ✅ |
 | M12-H | Audit Remediation / Vault Hardening | ✅ |
 | **PB** | **Production Benchmarks (Rigor/Perf)** | ✅ |
+| **CA** | **Commercial Accuracy & Detail** | ✅ |
+
+## Commercial Accuracy & Detail [TESTED]
+
+The kernel has been hardened for commercial legal environments:
+- **Semantic Perturbation Detection**: Verifier detects "may/shall" swaps and quote hallucinations with 100% precision.
+- **Commercial Metadata**: Tracking of Counsel IDs, Firm IDs, and Citation Confidence.
+- **Rational Budgeting**: 100% deterministic `BigRational` arithmetic for budget conservation laws.
+- **Double-Blind Benchmarking**: Verified against hallucination attacks via `bench_commercial.rs`.
 
 ## Quick Start
 

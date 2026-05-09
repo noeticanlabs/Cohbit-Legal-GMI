@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
 use crate::receipt::{LegalReceipt, stable_hash};
-use crate::{ReceiptHash, StateHash};
+use crate::StateHash;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReceiptLogRecord {

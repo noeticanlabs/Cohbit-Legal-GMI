@@ -1,10 +1,20 @@
 use cohbit_legal_gmi::*;
 use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     let base_dir = Path::new("fixtures/demo_data");
     let bundle_dir = Path::new("fixtures/demo_bundle");
+
+    if base_dir.exists() {
+        fs::remove_dir_all(base_dir)?;
+    }
+    if bundle_dir.exists() {
+        fs::remove_dir_all(bundle_dir)?;
+    }
 
     let pm = PersistenceManager::new(base_dir)?;
     
@@ -24,6 +34,7 @@ fn main() -> anyhow::Result<()> {
         jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
         source_text: Some("The right of the people to be secure...".into()),
         procedural_status: ProceduralStatus::GoodLaw,
+        ..Default::default()
     };
     let mut refs = HashMap::new();
     refs.insert("123 U.S. 456".to_string(), reference.clone());
@@ -49,6 +60,7 @@ fn main() -> anyhow::Result<()> {
         contrary_authorities: vec![],
         user_asserted_good_law: None,
         verifier_notes: vec![],
+        ..Default::default()
     };
 
     let config = VerificationConfig {
@@ -58,10 +70,15 @@ fn main() -> anyhow::Result<()> {
         valuation_config: valuation::ValuationConfig::default(),
     };
 
-    let (_, cohbit) = cohbit::apply(manifold, witness, &config, 0, Some(&adapter)).unwrap();
+    let (_, cohbit) = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter)).unwrap();
     pm.append_receipt(&cohbit.receipt)?;
 
-    // 4. Export Bundle
+    // 4. Anchor the Root (Mandatory for non-genesis bundles in Hardened Mode)
+    let anchor_adapter = LocalAnchorAdapter::new(base_dir)?;
+    let manifest = pm.load_manifest()?;
+    anchor_adapter.anchor_root(&manifest)?;
+
+    // 5. Export Bundle
     let bm = BundleManager::new(bundle_dir);
     let adapters: Vec<&dyn LegalSourceAdapter> = vec![&adapter];
     bm.export_bundle(&pm, &adapters)?;

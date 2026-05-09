@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use crate::{ReceiptHash, ClaimId, ReferenceId, StateHash};
+use crate::ReceiptHash;
 use crate::receipt::LegalReceipt;
 use crate::verifier::VerificationDecision;
 

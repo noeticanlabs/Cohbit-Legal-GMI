@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use chrono::Utc;
 use crate::receipt::stable_hash;
 use crate::persistence::ChainManifest;
@@ -71,20 +71,20 @@ impl RootAnchor for LocalAnchorAdapter {
     }
 }
 
-/// GitAnchorAdapter implements the RootAnchor trait by simulating the anchoring of roots into a Git repository.
+/// MockGitAnchorAdapter implements the RootAnchor trait by simulating the anchoring of roots into a Git repository.
 /// It performs internal state hashing to verify consistency, providing a cryptographically stable
 /// audit trail for V1.
-pub struct GitAnchorAdapter {
+pub struct MockGitAnchorAdapter {
     pub repo_path: PathBuf,
 }
 
-impl GitAnchorAdapter {
+impl MockGitAnchorAdapter {
     pub fn new(repo_path: impl AsRef<Path>) -> Self {
         Self { repo_path: repo_path.as_ref().to_path_buf() }
     }
 }
 
-impl RootAnchor for GitAnchorAdapter {
+impl RootAnchor for MockGitAnchorAdapter {
     fn anchor_root(&self, manifest: &ChainManifest) -> Result<AnchorReceipt> {
         let manifest_hash = stable_hash(manifest);
         let anchored_at = Utc::now().to_rfc3339();

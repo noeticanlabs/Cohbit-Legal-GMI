@@ -42,3 +42,9 @@ The kernel uses an append-only `.ndjson` log for receipts and traces.
 
 ## 7. Portable Evidence Bundle
 The `BundleManager` can export the entire audit state into a self-contained directory, including the actual source text (evidence substrate). This allows third parties to verify the legal trajectory without trusting the original generator.
+## 8. Commercial-Grade Metadata
+To support scholarly archival and law-firm-level auditing, the kernel tracks rich metadata:
+- **Counsel & Firm ID**: Identifies the generating entities for accountability.
+- **Citation Confidence**: Quantifies the model's self-assessment of source binding.
+- **Review Status**: Tracks the lifecycle of a witness (Draft, Certified, Adversarial Audit).
+- **Metadata Persistence**: All commercial metadata is hashed into the `TransitionTrace`, ensuring that audit trails remain intact across years of storage.

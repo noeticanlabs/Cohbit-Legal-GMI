@@ -33,6 +33,9 @@ impl CandidateClaim {
             },
             source_text: None,
             procedural_status: ProceduralStatus::GoodLaw,
+            citation_confidence: None,
+            counsel_id: None,
+            law_firm_id: None,
         });
 
         crate::witness::LegalWitness {
@@ -49,6 +52,7 @@ impl CandidateClaim {
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![format!("Model confidence: {}", self.model_confidence)],
+            review_status: None,
         }
     }
 }

@@ -11,7 +11,8 @@ impl CommitmentMembrane {
         manifold: &mut LegalManifold,
         explorer: &mut ExplorationSpace,
         config: &VerificationConfig,
-        defect_budget: i128,
+        spend: num_rational::BigRational,
+        defect: num_rational::BigRational,
         adapter: Option<&dyn LegalSourceAdapter>,
     ) -> Vec<Result<LegalCohBit, String>> {
         let mut results = vec![];
@@ -19,7 +20,7 @@ impl CommitmentMembrane {
         while let Some(candidate) = explorer.pop_candidate() {
             let witness = candidate.to_witness(&format!("claim_{}", manifold.claims.len()));
             
-            match apply(manifold.clone(), witness, config, defect_budget as i64, adapter) {
+            match apply(manifold.clone(), witness, config, spend.clone(), defect.clone(), adapter) {
                 Ok((new_manifold, cohbit)) => {
                     *manifold = new_manifold;
                     explorer.record_decision(&candidate.text, true);

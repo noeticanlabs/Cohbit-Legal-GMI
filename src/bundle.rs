@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
+use std::io::{BufRead, BufReader};
 use std::fs::{self, File};
-use std::io::{Write, BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use crate::persistence::{PersistenceManager, ChainManifest};
 use crate::receipt::stable_hash;
-use crate::adapter::{LegalSourceAdapter, AdapterTrace};
+use crate::adapter::LegalSourceAdapter;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceManifestEntry {
@@ -135,7 +135,7 @@ impl BundleManager {
 
     fn compute_terminal_bundle_hash(&self) -> Result<String> {
         let mut hasher = blake3::Hasher::new();
-        let files = ["manifest.json", "receipts.ndjson", "traces.ndjson", "anchor_receipts.ndjson", "source_manifest.json"];
+        let files = ["manifest.json", "receipts.ndjson", "traces.ndjson", "anchor_receipts.ndjson", "source_manifest.json", "audit_report.md"];
         for f in files {
             let p = self.bundle_dir.join(f);
             if p.exists() {
@@ -192,7 +192,11 @@ impl BundleManager {
 
         // 3. Verify Anchors
         let anchors_path = self.bundle_dir.join("anchor_receipts.ndjson");
-        if anchors_path.exists() {
+        if manifest.latest_step_index > 0 {
+            if !anchors_path.exists() {
+                return Err(anyhow!("Anchoring Violation: Bundle contains logic (step_index {}) but no external anchors. Production-grade bundles must be anchored if not at genesis.", manifest.latest_step_index));
+            }
+
             let file = File::open(anchors_path)?;
             let reader = BufReader::new(file);
             let mut last_anchor = None;

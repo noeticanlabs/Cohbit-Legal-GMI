@@ -1,7 +1,7 @@
 use cohbit_legal_gmi::*;
 use cohbit_legal_gmi::manifold::LegalManifold;
 use cohbit_legal_gmi::witness::LegalWitness;
-use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
+use cohbit_legal_gmi::verifier::VerificationConfig;
 use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
 use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LegalBenchEntry {
@@ -38,7 +40,7 @@ fn main() -> anyhow::Result<()> {
             citation: entry.answer.clone(),
             jurisdiction: Jurisdiction { court: "US Federal".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
             source_text: Some(format!("Source for {}: {}", entry.answer, entry.text)),
-            procedural_status: ProceduralStatus::GoodLaw,
+            procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
         });
     }
 
@@ -84,7 +86,7 @@ fn main() -> anyhow::Result<()> {
                     citation: cit.clone(),
                     jurisdiction: Jurisdiction { court: "US Federal".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
                     source_text: Some(txt.clone()),
-                    procedural_status: ProceduralStatus::GoodLaw,
+                    procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
                 }),
                 support_score: Some("1".to_string()),
                 ..setup_empty_witness()
@@ -98,7 +100,7 @@ fn main() -> anyhow::Result<()> {
             };
 
             // Apply transition
-            let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, i as i64, Some(&adapter))?;
+            let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, BigRational::from_i64(i as i64).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
             
             // NPE learns from the result
             memory.ingest(&cohbit.receipt);
@@ -120,6 +122,6 @@ fn main() -> anyhow::Result<()> {
 fn setup_empty_witness() -> LegalWitness {
     LegalWitness {
         proposed_claim: LegalClaim { id: ClaimId("stub".into()), text: "".into(), cited_reference: None, quoted_text: None, authority_label: AuthorityLabel::Advisory, inference: InferenceKind::UnsupportedHypothesis },
-        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], ..Default::default()
     }
 }

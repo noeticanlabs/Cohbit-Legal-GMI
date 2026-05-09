@@ -8,7 +8,7 @@ inductive Decision
 deriving DecidableEq, Repr
 
 structure State where
-  valuation : Int
+  valuation : Rat
   hash : Nat
   stepIndex : Nat
 deriving DecidableEq, Repr
@@ -32,9 +32,9 @@ deriving DecidableEq, Repr
 
 structure VerifierResult where
   decision : Decision
-  deltaV : Int
-  spend : Int
-  defect : Int
+  deltaV : Rat
+  spend : Rat
+  defect : Rat
 deriving DecidableEq, Repr
 
 def stable (r : VerifierResult) : Prop :=

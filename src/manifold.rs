@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     claim::LegalClaim,
-    ClaimId, EvidenceId, ReceiptHash, ReferenceId, StateHash,
+    EvidenceId, ReceiptHash, ReferenceId, StateHash,
     reference::{Jurisdiction, LegalReference},
     witness::LegalWitness,
     verifier::VerifierResult,
@@ -31,7 +31,7 @@ pub struct LegalManifold {
 
 impl LegalManifold {
     pub fn valuation_rat(&self) -> num_rational::BigRational {
-        crate::valuation::parse_decimal(&self.valuation)
+        crate::valuation::parse_rational(&self.valuation)
     }
 }
 
@@ -41,8 +41,6 @@ struct ManifoldCommitmentView<'a> {
     claims: &'a Vec<LegalClaim>,
     references: &'a BTreeMap<ReferenceId, LegalReference>,
     valuation: &'a String,
-    step_index: u64,
-    last_receipt_hash: &'a Option<ReceiptHash>,
     procedural_posture: &'a ProceduralPosture,
 }
 
@@ -97,8 +95,6 @@ impl LegalManifold {
             claims: &self.claims,
             references: &self.references,
             valuation: &self.valuation,
-            step_index: self.step_index,
-            last_receipt_hash: &self.last_receipt_hash,
             procedural_posture: &self.procedural_posture,
         };
         StateHash(crate::receipt::stable_hash(&view))

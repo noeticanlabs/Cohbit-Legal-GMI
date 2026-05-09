@@ -1,13 +1,15 @@
 use cohbit_legal_gmi::*;
 use cohbit_legal_gmi::manifold::LegalManifold;
 use cohbit_legal_gmi::witness::LegalWitness;
-use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
+use cohbit_legal_gmi::verifier::VerificationConfig;
 use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
 use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     let output_dir = "fixtures/bench_receipts";
@@ -27,7 +29,7 @@ fn main() -> anyhow::Result<()> {
         citation: "100 U.S. 1".into(),
         jurisdiction: setup_jurisdiction(),
         source_text: Some("The core principle of the law...".into()),
-        procedural_status: ProceduralStatus::GoodLaw,
+        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
     };
     refs.insert("100 U.S. 1".into(), ref1.clone());
     let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
@@ -46,7 +48,7 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, 0, Some(&adapter))?;
+    let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     let receipt_json = serde_json::to_string_pretty(&cohbit.receipt)?;
     fs::write(format!("{}/accept_benchmark.json", output_dir), receipt_json)?;
     println!("- Generated accept_benchmark.json");
@@ -66,7 +68,7 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let (_, cohbit_reject) = cohbit::apply(manifold, witness_reject, &config, 1, Some(&adapter))?;
+    let (_, cohbit_reject) = cohbit::apply(manifold, witness_reject, &config, BigRational::from_i64(1).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
     let reject_json = serde_json::to_string_pretty(&cohbit_reject.receipt)?;
     fs::write(format!("{}/reject_benchmark.json", output_dir), reject_json)?;
     println!("- Generated reject_benchmark.json");
@@ -93,6 +95,6 @@ fn setup_config() -> VerificationConfig {
 fn setup_empty_witness() -> LegalWitness {
     LegalWitness {
         proposed_claim: LegalClaim { id: ClaimId("stub".into()), text: "".into(), cited_reference: None, quoted_text: None, authority_label: AuthorityLabel::Advisory, inference: InferenceKind::UnsupportedHypothesis },
-        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], ..Default::default()
     }
 }

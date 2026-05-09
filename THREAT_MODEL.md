@@ -21,3 +21,6 @@ The "Citation Goblin" represents various failure modes in legal AI systems: hall
 ## 5. Free Certainty (The Stability Violation)
 - **Threat**: A model makes high-certainty claims without providing enough evidentiary "spend."
 - **Defense**: **Stability Law**. The kernel enforces $\Delta V \ge spend - defect$. A transition is rejected if the energy balance is negative.
+## 6. Commercial Provenance Deletion (The Anonymity Attack)
+- **Threat**: An attacker removes or modifies Counsel/Firm identifiers to hide the origin of a hallucinated claim.
+- **Defense**: **Hardened Metadata Persistence**. Commercial metadata (CounselId, CitationConfidence) is strictly hashed into the `TransitionTrace`. Any modification to the provenance record invalidates the receipt hash and breaks the chain.

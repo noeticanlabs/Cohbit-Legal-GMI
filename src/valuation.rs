@@ -4,18 +4,41 @@ use crate::verifier::VerifierResult;
 use crate::adapter::TreatmentType;
 use num_rational::BigRational;
 use num_bigint::BigInt;
-use num_traits::{FromPrimitive, ToPrimitive};
+use num_traits::FromPrimitive;
 
-pub fn parse_decimal(s: &str) -> BigRational {
-    if let Some((int_part, frac_part)) = s.split_once('.') {
-        let int_val: BigInt = int_part.parse().unwrap_or(BigInt::from(0));
-        let frac_val: BigInt = frac_part.parse().unwrap_or(BigInt::from(0));
-        let denominator = BigInt::from(10).pow(frac_part.len() as u32);
-        
-        BigRational::from(int_val) + BigRational::new(frac_val, denominator)
-    } else {
-        s.parse::<BigInt>().map(BigRational::from).unwrap_or_else(|_| BigRational::from_i64(0).unwrap())
+pub fn parse_rational(s: &str) -> BigRational {
+    try_parse_rational(s).unwrap_or_else(|_| BigRational::from_i64(0).unwrap())
+}
+
+pub fn try_parse_rational(s: &str) -> Result<BigRational, anyhow::Error> {
+    let s = s.trim();
+    if s.is_empty() {
+        return Ok(BigRational::from_i64(0).unwrap());
     }
+
+    // Handle fraction format: "285/2"
+    if let Some((num, den)) = s.split_once('/') {
+        let n: BigInt = num.trim().parse()?;
+        let d: BigInt = den.trim().parse()?;
+        if d == BigInt::from(0) {
+            return Err(anyhow::anyhow!("Zero denominator in rational: {}", s));
+        }
+        return Ok(BigRational::new(n, d));
+    }
+
+    // Handle decimal format: "142.5"
+    if let Some((int_part, frac_part)) = s.split_once('.') {
+        let negative = int_part.starts_with('-');
+        let int_clean = int_part.trim_start_matches('-');
+        let int_val: BigInt = if int_clean.is_empty() { BigInt::from(0) } else { int_clean.parse()? };
+        let frac_val: BigInt = frac_part.parse()?;
+        let denominator = BigInt::from(10).pow(frac_part.len() as u32);
+        let value = BigRational::from(int_val) + BigRational::new(frac_val, denominator);
+        return Ok(if negative { -value } else { value });
+    }
+
+    // Handle integer format: "100"
+    Ok(BigRational::from(s.parse::<BigInt>()?))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,13 +62,13 @@ impl Default for ValuationConfig {
 
 impl ValuationConfig {
     pub fn authority_weight_rat(&self) -> BigRational {
-        self.authority_weight.parse().unwrap_or_else(|_| BigRational::from_i64(1).unwrap())
+        parse_rational(&self.authority_weight)
     }
     pub fn relevance_weight_rat(&self) -> BigRational {
-        self.relevance_weight.parse().unwrap_or_else(|_| BigRational::from_i64(1).unwrap())
+        parse_rational(&self.relevance_weight)
     }
     pub fn conflict_penalty_base_rat(&self) -> BigRational {
-        self.conflict_penalty_base.parse().unwrap_or_else(|_| BigRational::from_i64(50).unwrap())
+        parse_rational(&self.conflict_penalty_base)
     }
 }
 
