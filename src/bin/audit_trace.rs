@@ -64,28 +64,38 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+use cohbit_legal_gmi::valuation::parse_decimal;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
+
 fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -> Result<()> {
     println!("Auditing Step {}: {:?}", trace.step_index, trace.decision);
     let mut issues = Vec::new();
 
+    let delta_v = parse_decimal(&trace.delta_v);
+    let defect = parse_decimal(&trace.defect);
+    let spend_rat = BigRational::from_i64(trace.spend).unwrap();
+    let val_pre = parse_decimal(&trace.valuation_pre);
+    let val_post = parse_decimal(&trace.valuation_post);
+
     // 1. Logic Audit
     match trace.decision {
         VerificationDecision::Accept => {
-            // Stability Law Check
-            let required_delta = trace.spend - trace.defect;
-            if trace.delta_v < required_delta {
+            // Stability Law Check: delta_v >= spend - defect
+            let required_delta = spend_rat - defect;
+            if delta_v < required_delta {
                 issues.push(format!(
-                    "Stability Law Violation: coherence_gain ({}) < spend - defect ({} - {} = {})",
-                    trace.delta_v, trace.spend, trace.defect, required_delta
+                    "Stability Law Violation: coherence_gain ({}) < spend - defect ({})",
+                    trace.delta_v, required_delta
                 ));
             }
 
-            // Valuation Continuity Check
-            let expected_post_valuation = trace.valuation_pre - trace.delta_v;
-            if trace.valuation_post != expected_post_valuation {
+            // Valuation Continuity Check: valuation_post == valuation_pre - delta_v
+            let expected_post_valuation = &val_pre - delta_v;
+            if val_post != expected_post_valuation {
                 issues.push(format!(
-                    "Valuation Inconsistency (Accept): valuation_post ({}) != valuation_pre - delta_v ({} - {} = {})",
-                    trace.valuation_post, trace.valuation_pre, trace.delta_v, expected_post_valuation
+                    "Valuation Inconsistency (Accept): valuation_post ({}) != valuation_pre - delta_v ({})",
+                    trace.valuation_post, expected_post_valuation
                 ));
             }
         }
@@ -99,7 +109,7 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
             }
 
             // Valuation Law Check (Reject -> No Change)
-            if trace.valuation_pre != trace.valuation_post {
+            if val_pre != val_post {
                 issues.push(format!(
                     "Valuation Law Violation (Reject): valuation_pre ({}) != valuation_post ({})",
                     trace.valuation_pre, trace.valuation_post
@@ -136,7 +146,8 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
             }
         }
 
-        if trace.valuation_pre != prev.valuation_post {
+        let val_prev_post = parse_decimal(&prev.valuation_post);
+        if val_pre != val_prev_post {
             issues.push(format!(
                 "Valuation Chain Discontinuity: current valuation_pre ({}) != prev valuation_post ({})",
                 trace.valuation_pre, prev.valuation_post

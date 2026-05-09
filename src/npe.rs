@@ -63,7 +63,7 @@ impl LegalLlmHook for SyntheticLegalNpe {
                     quoted_text: Some("purpose and character of the use".into()),
                     authority_label: AuthorityLabel::Binding,
                     inference: InferenceKind::DirectQuotation,
-                    model_confidence: 0.95,
+                    model_confidence: "0.95".into(),
                 },
                 CandidateClaim {
                     text: "Market harm is negligible due to the small portion used.".into(),
@@ -71,7 +71,7 @@ impl LegalLlmHook for SyntheticLegalNpe {
                     quoted_text: Some("effect of the use upon the potential market".into()),
                     authority_label: AuthorityLabel::Binding,
                     inference: InferenceKind::DirectQuotation,
-                    model_confidence: 0.88,
+                    model_confidence: "0.88".into(),
                 }
             ],
         })

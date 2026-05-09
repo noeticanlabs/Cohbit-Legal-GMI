@@ -10,6 +10,7 @@ deriving DecidableEq, Repr
 structure State where
   valuation : Int
   hash : Nat
+  stepIndex : Nat
 deriving DecidableEq, Repr
 
 structure Delta where
@@ -46,37 +47,45 @@ structure ApplyResult where
   pre : State
   post : State
   result : VerifierResult
-  receipt? : Option Receipt
+  receipt : Receipt
 
 def apply (s : State) (r : VerifierResult) (nextHash : Nat) : ApplyResult :=
   if r.decision = Decision.accept ∧ stable r then
     {
       pre := s,
-      post := { valuation := s.valuation - r.deltaV, hash := nextHash },
+      post := { valuation := s.valuation - r.deltaV, hash := nextHash, stepIndex := s.stepIndex + 1 },
       result := r,
-      receipt? := some {
-        stepIndex := 0,
-        prevHash := none,
+      receipt := {
+        stepIndex := s.stepIndex + 1,
+        prevHash := some s.hash,
         preHash := s.hash,
         postHash := nextHash,
         receiptHash := nextHash + 1,
-        decision := r.decision
+        decision := Decision.accept
       }
     }
   else
     {
       pre := s,
-      post := s,
+      post := { valuation := s.valuation, hash := s.hash, stepIndex := s.stepIndex + 1 },
       result := r,
-      receipt? := none
+      receipt := {
+        stepIndex := s.stepIndex + 1,
+        prevHash := some s.hash,
+        preHash := s.hash,
+        postHash := s.hash,
+        receiptHash := s.hash + 2,
+        decision := Decision.reject
+      }
     }
 
 -- === M8 THEOREM TARGETS ===
 
-theorem reject_no_mutation
+theorem reject_preserves_state_content
   (s : State) (r : VerifierResult) (nextH : Nat)
   (h : r.decision = Decision.reject) :
-  (apply s r nextH).post = (apply s r nextH).pre := by
+  (apply s r nextH).post.valuation = s.valuation ∧ 
+  (apply s r nextH).post.hash = s.hash := by
   unfold apply
   have h_cond : ¬(r.decision = Decision.accept ∧ stable r) := by
     intro h_and
@@ -84,6 +93,14 @@ theorem reject_no_mutation
     rw [h] at h_dec
     contradiction
   simp [h_cond]
+
+theorem apply_always_increments_step
+  (s : State) (r : VerifierResult) (nextH : Nat) :
+  (apply s r nextH).post.stepIndex = s.stepIndex + 1 := by
+  unfold apply
+  by_cases h_cond : r.decision = Decision.accept ∧ stable r
+  · simp [h_cond]
+  · simp [h_cond]
 
 theorem accept_requires_gauntlet
   (s : State) (r : VerifierResult) (nextH : Nat)

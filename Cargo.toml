@@ -12,6 +12,7 @@ hex = "0.4"
 thiserror = "2"
 num-rational = "0.4"
 num-traits = "0.2"
+num-bigint = "0.4"
 clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
@@ -27,6 +28,26 @@ path = "src/main.rs"
 [[bin]]
 name = "coh-audit"
 path = "src/bin/audit_trace.rs"
+
+[[bin]]
+name = "bench-legalbench"
+path = "src/bin/bench_legalbench.rs"
+
+[[bin]]
+name = "adversarial-report"
+path = "src/bin/adversarial_report.rs"
+
+[[bin]]
+name = "bench-convergence"
+path = "src/bin/bench_convergence.rs"
+
+[[bin]]
+name = "prod-bench"
+path = "src/bin/prod_bench.rs"
+
+[[bin]]
+name = "generate-bench-receipts"
+path = "src/bin/generate_bench_receipts.rs"
 
 [[example]]
 name = "generate_demo_bundle"

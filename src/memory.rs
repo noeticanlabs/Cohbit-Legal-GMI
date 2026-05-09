@@ -36,6 +36,12 @@ pub struct LegalNpeMemory {
     /// MACRO: System-wide metrics
     pub total_steps: u64,
     pub total_success: u64,
+    pub total_rejections: u64,
+    
+    /// Metrics for "Multi-view Rate" and "Quick to Correct Ratio"
+    pub total_explorations: u64,      // Total candidates considered
+    pub total_rejection_latency: u64, // Sum of steps until a rejection occurred
+    pub total_queue_depth_sum: u64,   // Sum of queue depths at each step
 }
 
 impl LegalNpeMemory {
@@ -46,6 +52,10 @@ impl LegalNpeMemory {
             hallucination_traps: HashMap::new(),
             total_steps: 0,
             total_success: 0,
+            total_rejections: 0,
+            total_explorations: 0,
+            total_rejection_latency: 0,
+            total_queue_depth_sum: 0,
         }
     }
 
@@ -63,9 +73,19 @@ impl LegalNpeMemory {
 
         if receipt.decision == VerificationDecision::Accept {
             self.total_success += 1;
-            // In a full implementation, we'd extract the citation from the witness
-            // and call record_success. For now, this is a placeholder for the logic.
+        } else if receipt.decision == VerificationDecision::Reject {
+            self.total_rejections += 1;
+            // Latency is derived from the step index relative to the start of an exploration
+            self.total_rejection_latency += receipt.step_index;
         }
+    }
+
+    pub fn multi_view_rate(&self) -> f64 {
+        if self.total_steps == 0 { 0.0 } else { self.total_queue_depth_sum as f64 / self.total_steps as f64 }
+    }
+
+    pub fn quick_to_correct_ratio(&self) -> f64 {
+        if self.total_rejections == 0 { 0.0 } else { self.total_rejection_latency as f64 / self.total_rejections as f64 }
     }
 
     /// Record a known failure (e.g., hallucinated quote) to avoid it in future brainstorming

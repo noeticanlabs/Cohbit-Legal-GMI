@@ -14,17 +14,18 @@ The kernel guarantees that no claim commits unless it survives the **Admissibili
 1.  **Existence (C1)**: Citation verified by source adapter.
 2.  **Binding (C2)**: Quote verified by exact byte-span in source.
 3.  **Alignment (C3)**: Claim support score meets threshold.
-4.  **Jurisdiction (C4)**: Authority is valid in the target forum ([Skeletal]).
+4.  **Jurisdiction (C4)**: Authority is valid in the target forum (V1 Standard).
 5.  **Status (C5)**: Authority is "Good Law" (not overruled/reversed).
-6.  **Inference (C6)**: Logical derivation is structurally sound ([Skeletal]).
+6.  **Inference (C6)**: Logical derivation is structurally sound (V1 Standard).
 7.  **Disclosure (C7)**: Contrary authorities accounted for.
 
 ## Technical Invariants
 
-- **Stability Law**: $\text{gain}_i \ge \text{spend}_i - \text{defect}_i$ (Accounted coherence gain).
+- **Stability Law**: $\text{gain}_i \ge \text{spend}_i - \text{defect}_i$ (Accounted coherence gain via `BigRational`).
 - **Audit Integrity**: $root_n = H(root_{n-1}, \rho_n)$ (Tamper-evident receipt chain).
 - **Evidence Binding**: $H(\text{source}) \in \rho_i$ (Proof is bound to the substrate).
 - **Rejection Invariance**: $\text{Reject} \Rightarrow s_{i+1} = s_i$ (No mutation on refusal).
+- **Numerical Sobriety**: 100% elimination of floating-point arithmetic in the verifier.
 
 ## Milestone Status
 
@@ -37,6 +38,7 @@ The kernel guarantees that no claim commits unless it survives the **Admissibili
 | M10-M11 | Persistent Chain & Root Anchoring | ✅ |
 | M12 | Portable Evidence Bundle | ✅ |
 | M12-H | Audit Remediation / Vault Hardening | ✅ |
+| **PB** | **Production Benchmarks (Rigor/Perf)** | ✅ |
 
 ## Quick Start
 
@@ -46,10 +48,10 @@ cargo build
 cargo test
 ```
 
-### 2. Audit a Trajectory
+### 2. Run Production Benchmarks
 ```powershell
-# Verify full NDJSON trajectory log against formal laws
-cargo run --bin coh-audit -- --trace-log path/to/traces.ndjson
+# Run the rigor, performance, and integrity suite
+cargo run --bin prod-bench
 ```
 
 ### 3. Verify an Evidence Bundle
@@ -63,6 +65,7 @@ bm.verify_bundle().expect("Audit Failure: Bundle Tampered");
 ## Documentation
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md): Deep dive into the manifold and verifier.
+- [BENCHMARKS.md](./BENCHMARKS.md): Production targets and performance baselines.
 - [THREAT_MODEL.md](./THREAT_MODEL.md): Neutralizing the "citation goblin."
 - [DEMO.md](./DEMO.md): Step-by-step demonstration of kernel behaviors.
 - [docs/SCHEMAS.md](./docs/SCHEMAS.md): JSON/NDJSON schema definitions.

@@ -1,0 +1,10 @@
+{"text": "\"A court also should consider the patent's prosecution history, and may rely on dictionary definitions, \"\"so long as the dictionary definition does not contradict any definition found in or ascertained by a reading of the patent documents.\"\"\"", "answer": "Phillips v. AWH Corp.", "task": "citation_prediction_open"}
+{"text": "We review claim construction based on intrinsic evidence de novo and review any findings of fact regarding ex- trinsic evidence for clear error.", "answer": "SpeedTrack, Inc. v. Amazon.com, Inc.", "task": "citation_prediction_open"}
+{"text": "\"A \"\"patent is invalid for indefiniteness if its claims, read in light of the specification delineating the patent, and the prosecution history, fail to inform, with reasonable cer- tainty, those skilled in the art about the scope of the inven- tion.\"\"\"", "answer": "Nautilus, Inc. v. Biosig Instruments, Inc.", "task": "citation_prediction_open"}
+{"text": "\"District courts must hold an evidentiary hearing on motions under § 2255 \"\"unless the record conclusively shows that the petitioner is entitled to no relief.\"\"\"", "answer": "Martin v. United States", "task": "citation_prediction_open"}
+{"text": "Once the case proceeds to trial, the full record developed in court supersedes the record existing at the time of the summary-judgment motion.", "answer": "Ortiz v. Jordan", "task": "citation_prediction_open"}
+{"text": "A soft drink named \"\"Apple-Strawberry.\"\"", "answer": "descriptive", "task": "abercrombie"}
+{"text": "A brand of shoes named \"\"Footwear.\"\"", "answer": "generic", "task": "abercrombie"}
+{"text": "A brand of computers named \"\"Apple.\"\"", "answer": "arbitrary", "task": "abercrombie"}
+{"text": "A brand of film named \"\"Kodak.\"\"", "answer": "fanciful", "task": "abercrombie"}
+{"text": "A brand of refrigerators named \"\"Coppertone.\"\"", "answer": "suggestive", "task": "abercrombie"}

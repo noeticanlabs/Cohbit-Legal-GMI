@@ -18,7 +18,7 @@ pub struct CandidateClaim {
     pub quoted_text: Option<String>,
     pub authority_label: AuthorityLabel,
     pub inference: InferenceKind,
-    pub model_confidence: f64,
+    pub model_confidence: String, // RFAP: String for BigRational
 }
 
 impl CandidateClaim {
@@ -45,10 +45,10 @@ impl CandidateClaim {
                 inference: self.inference.clone(),
             },
             cited_reference,
-            support_score: Some(self.model_confidence),
+            support_score: Some(self.model_confidence.clone()),
             contrary_authorities: vec![],
             user_asserted_good_law: None,
-            verifier_notes: vec![format!("Model confidence: {:.2}", self.model_confidence)],
+            verifier_notes: vec![format!("Model confidence: {}", self.model_confidence)],
         }
     }
 }

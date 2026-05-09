@@ -25,7 +25,7 @@ mod tests {
 
     fn setup_config() -> VerificationConfig {
         VerificationConfig {
-            support_threshold: 0.5,
+            support_threshold: "0.5".into(),
             allow_unknown_good_law: true,
             require_conflict_disclosure: false,
             valuation_config: ValuationConfig::default(),
@@ -49,7 +49,7 @@ mod tests {
                     quoted_text: Some("Non-existent text".into()),
                     authority_label: AuthorityLabel::Binding,
                     inference: InferenceKind::DirectQuotation,
-                    model_confidence: 1.0,
+                    model_confidence: "1".into(),
                 }
             ],
         };
@@ -104,7 +104,7 @@ mod tests {
                 quoted_text: None,
                 authority_label: AuthorityLabel::Persuasive, 
                 inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
-                model_confidence: 1.0,
+                model_confidence: "1".into(),
             }],
         };
         explorer.inject_proposal(proposal);
@@ -154,7 +154,7 @@ mod tests {
                     quoted_text: Some("Target Text".into()),
                     authority_label: AuthorityLabel::Persuasive, 
                     inference: InferenceKind::DirectQuotation,
-                    model_confidence: 1.0,
+                    model_confidence: "1".into(),
                 }
             ],
         };
@@ -223,7 +223,7 @@ mod tests {
                 inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
             },
             cited_reference: Some(reference),
-            support_score: Some(1.0),
+            support_score: Some("1".to_string()),
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![],
@@ -262,7 +262,7 @@ mod tests {
                 inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] },
             },
             cited_reference: Some(reference),
-            support_score: Some(0.5),
+            support_score: Some("0.5".to_string()),
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![],
@@ -300,7 +300,7 @@ mod tests {
 
         let witness = LegalWitness {
             proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: None, authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::RuleApplication { rule_claims: vec![], fact_claims: vec![] } },
-            cited_reference: Some(reference), support_score: Some(0.5), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
         };
 
         let (_, cohbit) = apply(manifold, witness, &config, 0, None).unwrap();
@@ -379,7 +379,7 @@ mod tests {
 
         let witness = LegalWitness {
             proposed_claim: LegalClaim { id: ClaimId("c1".into()), text: "X".into(), cited_reference: Some(ReferenceId("r1".into())), quoted_text: Some("Evidence".into()), authority_label: AuthorityLabel::Persuasive, inference: InferenceKind::DirectQuotation },
-            cited_reference: Some(reference), support_score: Some(0.5), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
+            cited_reference: Some(reference), support_score: Some("0.5".to_string()), contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![],
         };
 
         // Create a transition with a trace

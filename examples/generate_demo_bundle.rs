@@ -45,14 +45,14 @@ fn main() -> anyhow::Result<()> {
             inference: InferenceKind::DirectQuotation 
         },
         cited_reference: Some(reference),
-        support_score: Some(0.5),
+        support_score: Some("0.5".to_string()),
         contrary_authorities: vec![],
         user_asserted_good_law: None,
         verifier_notes: vec![],
     };
 
     let config = VerificationConfig {
-        support_threshold: 0.5,
+        support_threshold: "0.5".into(),
         allow_unknown_good_law: true,
         require_conflict_disclosure: false,
         valuation_config: valuation::ValuationConfig::default(),

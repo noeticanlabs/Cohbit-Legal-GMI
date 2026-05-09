@@ -17,8 +17,8 @@ pub struct LegalManifold {
     pub procedural_posture: ProceduralPosture,
     pub evidence: BTreeMap<EvidenceId, EvidenceItem>,
     
-    // Core Physics
-    pub valuation: u128,
+    // Core Physics (Numerical Sobriety: Rational-based)
+    pub valuation: String,
     pub step_index: u64,
     
     pub pre_state_hash: StateHash,
@@ -29,12 +29,18 @@ pub struct LegalManifold {
     pub knowledge_trajectory: Vec<ReceiptHash>,
 }
 
+impl LegalManifold {
+    pub fn valuation_rat(&self) -> num_rational::BigRational {
+        crate::valuation::parse_decimal(&self.valuation)
+    }
+}
+
 /// A canonical view of the manifold's committed state for hashing
 #[derive(Serialize)]
 struct ManifoldCommitmentView<'a> {
     claims: &'a Vec<LegalClaim>,
     references: &'a BTreeMap<ReferenceId, LegalReference>,
-    valuation: u128,
+    valuation: &'a String,
     step_index: u64,
     last_receipt_hash: &'a Option<ReceiptHash>,
     procedural_posture: &'a ProceduralPosture,
@@ -77,7 +83,7 @@ impl LegalManifold {
             jurisdiction_graph: Vec::new(),
             procedural_posture,
             evidence: BTreeMap::new(),
-            valuation: 1000000,
+            valuation: "1.0".to_string(), // Initial uncertainty normalized to 1.0
             step_index: 0,
             pre_state_hash: StateHash("genesis".to_string()),
             post_state_hash: StateHash("genesis".to_string()),
@@ -90,13 +96,12 @@ impl LegalManifold {
         let view = ManifoldCommitmentView {
             claims: &self.claims,
             references: &self.references,
-            valuation: self.valuation,
+            valuation: &self.valuation,
             step_index: self.step_index,
             last_receipt_hash: &self.last_receipt_hash,
             procedural_posture: &self.procedural_posture,
         };
-        let json = serde_json::to_string(&view).unwrap_or_default();
-        StateHash(blake3::hash(json.as_bytes()).to_hex().to_string())
+        StateHash(crate::receipt::stable_hash(&view))
     }
 
     pub fn compute_receipt_hash(&self, witness: &LegalWitness, result: &VerifierResult) -> ReceiptHash {

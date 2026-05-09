@@ -43,19 +43,51 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Propose { claim } => {
-            println!("Proposed exploratory claim from: {}", claim);
-            // Implementation placeholder for NPE logic
+            println!("Proposed exploratory claim: {}", claim);
+            // In V1, Propose triggers a brainstorm event in the exploration space.
+            println!("[NPE] Brainstorming commitment candidates for manifold stability...");
         }
         Commands::Verify { witness } => {
             println!("Verifying witness from: {}", witness);
-            // Implementation placeholder for Gauntlet logic
+            let witness_data = std::fs::read_to_string(&witness)?;
+            let witness: cohbit_legal_gmi::witness::LegalWitness = serde_json::from_str(&witness_data)?;
+            let config = cohbit_legal_gmi::verifier::VerificationConfig {
+                support_threshold: "0.5".into(),
+                allow_unknown_good_law: true,
+                require_conflict_disclosure: false,
+                valuation_config: cohbit_legal_gmi::valuation::ValuationConfig::default(),
+            };
+            
+            let result = cohbit_legal_gmi::verifier::AdmissibilityGauntlet::evaluate(&witness, &config, None);
+            println!("--- Verification Result ---");
+            println!("Decision: {:?}", result.decision);
+            println!("Valuation Delta: {}", result.valuation_delta);
         }
         Commands::Commit { witness, db } => {
             println!("Committing witness from: {} to {}", witness, db);
-            let _pm = PersistenceManager::new(&db)?;
-            // In a real scenario, we would load the manifold, apply the witness, 
-            // and then append the receipt. For the CLI demo, we acknowledge the flow.
-            println!("Persistence manager initialized. Ready for commitment.");
+            let pm = PersistenceManager::new(&db)?;
+            let witness_data = std::fs::read_to_string(&witness)?;
+            let witness: cohbit_legal_gmi::witness::LegalWitness = serde_json::from_str(&witness_data)?;
+            
+            let manifold = LegalManifold::new(cohbit_legal_gmi::manifold::ProceduralPosture {
+                forum: cohbit_legal_gmi::reference::Jurisdiction {
+                    court: "Supreme Court".into(), region: "US".into(), level: cohbit_legal_gmi::reference::JurisdictionLevel::Supreme
+                },
+                matter_type: "General".into(),
+                stage: "Initial".into(),
+            });
+
+            let config = cohbit_legal_gmi::verifier::VerificationConfig {
+                support_threshold: "0.5".into(),
+                allow_unknown_good_law: true,
+                require_conflict_disclosure: false,
+                valuation_config: cohbit_legal_gmi::valuation::ValuationConfig::default(),
+            };
+
+            let (_, cohbit) = cohbit_legal_gmi::cohbit::apply(manifold, witness, &config, 0, None)?;
+            let manifest = pm.append_receipt(&cohbit.receipt)?;
+            println!("Commit successful. Step Index: {}", manifest.latest_step_index);
+            println!("Root Commitment: {}", manifest.root_commitment);
         }
         Commands::Inspect { db } => {
             println!("Inspecting legal manifold at: {}", db);

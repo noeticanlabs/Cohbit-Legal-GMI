@@ -6,9 +6,13 @@ use crate::error::GmiError;
 use crate::adapter::LegalSourceAdapter;
 use crate::ReceiptHash;
 
-/// The Stability Law: deltaV >= spend - defect
-pub fn is_stable(delta_v: i64, spend: i64, defect: i64) -> bool {
-    delta_v >= (spend - defect)
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
+
+/// The Stability Law: deltaV >= spend - defect (Numerical Sobriety: Rational-based)
+pub fn is_stable(delta_v: &BigRational, spend: i64, defect: &BigRational) -> bool {
+    let spend_rat = BigRational::from_i64(spend).unwrap();
+    delta_v >= &(spend_rat - defect)
 }
 
 /// Apply a legal transition (witnessed claim) to the manifold
@@ -23,19 +27,19 @@ pub fn apply(
     
     let pre_state_hash = manifold.get_state_hash();
     let last_receipt_hash = manifold.last_receipt_hash.clone();
-    let valuation_pre = manifold.valuation;
+    let valuation_pre = manifold.valuation.clone();
 
-    if result.decision == VerificationDecision::Accept && is_stable(result.valuation_delta, spend, result.defect_reserve) {
+    let delta_v = result.valuation_delta_rat();
+    let defect = result.defect_reserve_rat();
+
+    if result.decision == VerificationDecision::Accept && is_stable(&delta_v, spend, &defect) {
         // Atomic state transition
         manifold.claims.push(witness.proposed_claim.clone());
         
         // Coherence gain reduces the valuation (uncertainty)
-        if result.valuation_delta >= 0 {
-            manifold.valuation = manifold.valuation.saturating_sub(result.valuation_delta as u128);
-        } else {
-            // Negative coherence gain (net penalty) increases valuation (uncertainty)
-            manifold.valuation = manifold.valuation.saturating_add(result.valuation_delta.abs() as u128);
-        }
+        // valuation_next = valuation_pre - delta_v
+        let val_next = manifold.valuation_rat() - delta_v;
+        manifold.valuation = val_next.to_string();
 
         manifold.pre_state_hash = pre_state_hash.clone();
         
@@ -53,11 +57,11 @@ pub fn apply(
             post_state_hash: post_state_hash.clone(),
             prev_receipt_hash: last_receipt_hash.clone(),
             receipt_hash: receipt_hash.clone(),
-            delta_v: result.valuation_delta,
+            delta_v: result.valuation_delta.clone(),
             spend,
-            defect: result.defect_reserve,
-            valuation_pre: valuation_pre as i64,
-            valuation_post: manifold.valuation as i64,
+            defect: result.defect_reserve.clone(),
+            valuation_pre: valuation_pre.clone(),
+            valuation_post: manifold.valuation.clone(),
             adapter_trace: result.adapter_trace.clone(),
         };
 
@@ -68,7 +72,7 @@ pub fn apply(
             last_receipt_hash,
             result.decision.clone(),
             manifold.step_index,
-            manifold.valuation as i64,
+            manifold.valuation.clone(),
             Some(trace),
         );
 
@@ -87,11 +91,11 @@ pub fn apply(
             post_state_hash: pre_state_hash.clone(), // No state change on reject
             prev_receipt_hash: last_receipt_hash.clone(),
             receipt_hash: receipt_hash.clone(),
-            delta_v: result.valuation_delta,
+            delta_v: result.valuation_delta.clone(),
             spend,
-            defect: result.defect_reserve,
-            valuation_pre: valuation_pre as i64,
-            valuation_post: valuation_pre as i64, // No valuation change on reject
+            defect: result.defect_reserve.clone(),
+            valuation_pre: valuation_pre.clone(),
+            valuation_post: valuation_pre.clone(), // No valuation change on reject
             adapter_trace: result.adapter_trace.clone(),
         };
 
@@ -102,7 +106,7 @@ pub fn apply(
             last_receipt_hash,
             VerificationDecision::Reject,
             manifold.step_index,
-            manifold.valuation as i64,
+            manifold.valuation.clone(),
             Some(trace),
         );
         Ok((manifold, LegalCohBit { receipt, verifier_result: result }))

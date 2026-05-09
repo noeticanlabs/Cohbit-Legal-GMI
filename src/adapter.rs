@@ -197,6 +197,7 @@ impl LegalSourceAdapter for LocalPdfSourceAdapter {
     }
 }
 
+#[derive(Default)]
 pub struct MockLegalStatusAdapter {
     pub status_overrides: HashMap<String, ProceduralStatus>,
     pub treatment_overrides: HashMap<String, Vec<TreatmentRecord>>,
@@ -217,9 +218,11 @@ impl LegalSourceAdapter for MockLegalStatusAdapter {
     }
 
     fn check_status(&self, reference: &LegalReference) -> Result<ProceduralStatus, AdapterError> {
-        Ok(self.status_overrides.get(&reference.citation)
-            .cloned()
-            .unwrap_or(ProceduralStatus::GoodLaw))
+        if let Some(status) = self.status_overrides.get(&reference.citation) {
+            Ok(status.clone())
+        } else {
+            Ok(reference.procedural_status.clone())
+        }
     }
 
     fn get_status_trace(&self, reference: &LegalReference) -> Result<StatusTrace, AdapterError> {
