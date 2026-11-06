@@ -1,6 +1,6 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use cohbit_legal_gmi::receipt::TransitionTrace;
+use cohbit_legal_gmi::receipt::{canonical_receipt_hash, TransitionTrace};
 use cohbit_legal_gmi::verifier::VerificationDecision;
 use std::fs;
 use std::io::{BufRead, BufReader};
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
         let trace_data = fs::read_to_string(&trace_path)
             .with_context(|| format!("Failed to read trace file: {:?}", trace_path))?;
         let trace: TransitionTrace = serde_json::from_str(&trace_data)?;
-        
+
         let mut prev_trace = None;
         if let Some(prev_path) = args.prev {
             let prev_data = fs::read_to_string(&prev_path)?;
@@ -50,10 +50,10 @@ fn main() -> Result<()> {
             let line = line?;
             let trace: TransitionTrace = serde_json::from_str(&line)
                 .with_context(|| format!("Failed to parse trace at line {}", i + 1))?;
-            
+
             audit_single_trace(&trace, prev_trace.as_ref())
                 .with_context(|| format!("Audit failed at step {}", trace.step_index))?;
-            
+
             prev_trace = Some(trace);
         }
         println!("[RESULT] FULL TRAJECTORY AUDIT PASS");
@@ -64,18 +64,22 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-use cohbit_legal_gmi::valuation::parse_rational;
+use cohbit_legal_gmi::valuation::try_parse_rational;
 // Removed unused imports
 
 fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -> Result<()> {
     println!("Auditing Step {}: {:?}", trace.step_index, trace.decision);
     let mut issues = Vec::new();
 
-    let delta_v = parse_rational(&trace.delta_v);
-    let defect = parse_rational(&trace.defect);
-    let spend_rat = parse_rational(&trace.spend);
-    let val_pre = parse_rational(&trace.valuation_pre);
-    let val_post = parse_rational(&trace.valuation_post);
+    let delta_v = try_parse_rational(&trace.delta_v)?;
+    let defect = try_parse_rational(&trace.defect)?;
+    let spend_rat = try_parse_rational(&trace.spend)?;
+    let val_pre = try_parse_rational(&trace.valuation_pre)?;
+    let val_post = try_parse_rational(&trace.valuation_post)?;
+
+    if canonical_receipt_hash(trace) != trace.receipt_hash {
+        issues.push("Receipt hash does not match the canonical transition trace".into());
+    }
 
     // 1. Logic Audit
     match trace.decision {
@@ -98,7 +102,7 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
                 ));
             }
         }
-        VerificationDecision::Reject => {
+        VerificationDecision::Reject | VerificationDecision::Escalate => {
             // Mutation Law Check (Reject -> No Mutation)
             if trace.pre_state_hash != trace.post_state_hash {
                 issues.push(format!(
@@ -115,9 +119,6 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
                 ));
             }
         }
-        _ => {
-            issues.push(format!("Unsupported decision type: {:?}", trace.decision));
-        }
     }
 
     // 2. Chained Continuity Audit
@@ -125,7 +126,8 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
         if trace.step_index != prev.step_index + 1 {
             issues.push(format!(
                 "Step Index Discontinuity: current index ({}) != prev index + 1 ({})",
-                trace.step_index, prev.step_index + 1
+                trace.step_index,
+                prev.step_index + 1
             ));
         }
 
@@ -136,16 +138,14 @@ fn audit_single_trace(trace: &TransitionTrace, prev: Option<&TransitionTrace>) -
             ));
         }
 
-        if let Some(prev_rho) = &trace.prev_receipt_hash {
-            if prev_rho.0 != prev.receipt_hash.0 {
-                issues.push(format!(
-                    "Receipt Chain Discontinuity: current prev_rho ({:?}) != prev rho ({:?})",
-                    prev_rho, prev.receipt_hash
-                ));
-            }
+        if trace.prev_receipt_hash.as_ref() != Some(&prev.receipt_hash) {
+            issues.push(format!(
+                "Receipt Chain Discontinuity: current prev_rho ({:?}) != prev rho ({:?})",
+                trace.prev_receipt_hash, prev.receipt_hash
+            ));
         }
 
-        let val_prev_post = parse_rational(&prev.valuation_post);
+        let val_prev_post = try_parse_rational(&prev.valuation_post)?;
         if val_pre != val_prev_post {
             issues.push(format!(
                 "Valuation Chain Discontinuity: current valuation_pre ({}) != prev valuation_post ({})",

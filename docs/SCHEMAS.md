@@ -1,97 +1,58 @@
-# CohBit Legal GMI: Schema Definitions
+# CohBit Legal GMI — Storage Schema Summary
 
-This document defines the JSON/NDJSON schemas used for persistent storage and evidence bundles in the CohBit Legal GMI kernel.
+The Rust serialization types are authoritative. All safety-critical numeric values are canonical rational strings.
 
-## 1. LegalReceipt (`receipts.ndjson`)
+## LegalReceipt
 
-The primary record of a committed transition.
-
-```json
-{
-  "receipt_hash": "string (hex)",
-  "pre_state_hash": "string (hex)",
-  "post_state_hash": "string (hex)",
-  "last_receipt_hash": "string (hex) | null",
-  "decision": "Accept | Reject",
-  "step_index": "integer",
-  "post_valuation": "integer",
-  "trace": "TransitionTrace | null"
-}
+```text
+schema_version, policy_version
+receipt_hash
+pre_state_hash, post_state_hash
+last_receipt_hash
+decision: Accept | Reject | Escalate
+step_index
+post_valuation
+trace: TransitionTrace
 ```
 
-## 2. TransitionTrace (`traces.ndjson`)
+A receipt is valid only when its duplicated fields correspond to the trace and `receipt_hash` equals the domain-separated canonical hash recomputed from the trace.
 
-Detailed audit trace of the Admissibility Gauntlet and Stability Law verification.
+## TransitionTrace
 
-```json
-{
-  "step_index": "integer",
-  "decision": "Accept | Reject",
-  "pre_state_hash": "string (hex)",
-  "post_state_hash": "string (hex)",
-  "prev_receipt_hash": "string (hex) | null",
-  "receipt_hash": "string (hex)",
-  "delta_v": "integer (coherence gain)",
-  "spend": "integer",
-  "defect": "integer",
-  "valuation_pre": "integer",
-  "valuation_post": "integer",
-  "adapter_trace": "AdapterTrace | null"
-}
+```text
+schema_version, policy_version
+step_index, decision
+pre_state_hash, post_state_hash
+prev_receipt_hash, receipt_hash
+delta_v, spend, defect
+valuation_pre, valuation_post
+adapter_trace
+witness
+verifier_result
 ```
 
-## 3. ChainManifest (`manifest.json`)
+The verifier result includes C1–C7 outcomes, independent evidence support, verified evidence links, adapter provenance, and the final decision.
 
-Current state summary of the local receipt chain.
+## ChainManifest
 
-```json
-{
-  "chain_id": "string",
-  "root_commitment": "string (hex) cumulative root",
-  "latest_step_index": "integer",
-  "latest_receipt_hash": "string (hex) | null",
-  "latest_state_hash": "string (hex)",
-  "initialized_at": "ISO8601 string"
-}
+```text
+version, chain_id
+genesis_state_hash
+latest_step_index
+latest_receipt_hash
+latest_state_hash
+latest_snapshot_hash
+root_commitment
 ```
 
-## 4. AnchorReceipt (`anchor_receipts.ndjson`)
+`state.json` must match all latest manifest fields. Appends use `pending-transaction.json`, fsync, atomic manifest/state replacement, and an exclusive writer lock.
 
-Notarization records binding the local chain to an external root (e.g., Git, Local).
+## BundleManifest and signature
 
-```json
-{
-  "anchor_id": "string",
-  "root_commitment": "string (hex)",
-  "manifest_hash": "string (hex)",
-  "anchored_at": "ISO8601 string",
-  "adapter_name": "string"
-}
-```
+`source_manifest.json` binds the chain/root and source entries. `bundle_hash.txt` hashes every accounted bundle file using its normalized relative path, length, and bytes. `bundle_signature.json` contains an Ed25519 signature over that hash.
 
-## 5. BundleManifest (`source_manifest.json`)
+The signature establishes origin only when checked with a trusted key acquired outside the bundle.
 
-Manifest binding source evidence to the exported bundle.
+## Formal scope
 
-```json
-{
-  "bundle_id": "string",
-  "chain_id": "string",
-  "root_commitment": "string (hex)",
-  "exported_at": "ISO8601 string",
-  "source_entries": [
-    {
-      "citation": "string",
-      "source_id": "string",
-      "text_hash": "string (hex)",
-      "file_name": "string"
-    }
-  ]
-}
-```
-
-## 6. Stability Law (Formal)
-
-For any accepted transition:
-$$\text{gain} \ge \text{spend} - \text{defect}$$
-where $\text{gain} = \text{valuation\_pre} - \text{valuation\_post}$.
+Lean proves content-state invariance for rejection/escalation and stability requirements for substantive accepted mutation. It does not prove the truth of cited law, status-provider correctness, semantic-review correctness, or deployment security.

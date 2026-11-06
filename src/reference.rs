@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::ReferenceId;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalReference {
@@ -30,13 +30,14 @@ pub enum JurisdictionLevel {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ProceduralStatus {
     GoodLaw,
     Overruled,
     Vacated,
     Reversed,
     Superseded,
+    #[default]
     Unknown,
 }
 impl Default for Jurisdiction {
@@ -46,12 +47,6 @@ impl Default for Jurisdiction {
             region: "Unknown".into(),
             level: JurisdictionLevel::Unknown,
         }
-    }
-}
-
-impl Default for ProceduralStatus {
-    fn default() -> Self {
-        ProceduralStatus::Unknown
     }
 }
 

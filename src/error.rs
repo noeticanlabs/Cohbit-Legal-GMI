@@ -16,6 +16,8 @@ pub enum GmiError {
     IoError(#[from] std::io::Error),
     #[error("Adapter error: {0}")]
     AdapterError(String),
+    #[error("Invalid numeric value: {0}")]
+    InvalidNumeric(String),
     #[error("Generic error: {0}")]
     Generic(String),
 }

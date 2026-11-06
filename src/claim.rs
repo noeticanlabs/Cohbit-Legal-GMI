@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::{ClaimId, ReferenceId};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalClaim {
@@ -11,15 +11,16 @@ pub struct LegalClaim {
     pub inference: InferenceKind,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum AuthorityLabel {
     Binding,
     Persuasive,
     Dictum,
+    #[default]
     Advisory,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum InferenceKind {
     DirectQuotation,
     RuleApplication {
@@ -28,18 +29,8 @@ pub enum InferenceKind {
     },
     BindingPrecedent,
     PersuasiveAuthority,
+    #[default]
     UnsupportedHypothesis,
-}
-impl Default for AuthorityLabel {
-    fn default() -> Self {
-        AuthorityLabel::Advisory
-    }
-}
-
-impl Default for InferenceKind {
-    fn default() -> Self {
-        InferenceKind::UnsupportedHypothesis
-    }
 }
 
 impl Default for LegalClaim {

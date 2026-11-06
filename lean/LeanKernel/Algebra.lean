@@ -5,6 +5,7 @@ namespace LegalKernel
 inductive Decision
 | accept
 | reject
+| escalate
 deriving DecidableEq, Repr
 
 structure State where
@@ -39,6 +40,9 @@ deriving DecidableEq, Repr
 
 def stable (r : VerifierResult) : Prop :=
   r.deltaV >= r.spend - r.defect
+
+def contentChanged (before after : State) : Prop :=
+  before.valuation ≠ after.valuation ∨ before.hash ≠ after.hash
 
 instance (r : VerifierResult) : Decidable (stable r) :=
   inferInstanceAs (Decidable (r.deltaV >= r.spend - r.defect))
@@ -75,7 +79,7 @@ def apply (s : State) (r : VerifierResult) (nextHash : Nat) : ApplyResult :=
         preHash := s.hash,
         postHash := s.hash,
         receiptHash := s.hash + 2,
-        decision := Decision.reject
+        decision := if r.decision = Decision.escalate then Decision.escalate else Decision.reject
       }
     }
 
@@ -104,18 +108,18 @@ theorem apply_always_increments_step
 
 theorem accept_requires_gauntlet
   (s : State) (r : VerifierResult) (nextH : Nat)
-  (h_mut : (apply s r nextH).post ≠ (apply s r nextH).pre) :
+  (h_mut : contentChanged (apply s r nextH).pre (apply s r nextH).post) :
   r.decision = Decision.accept := by
-  unfold apply at h_mut
+  unfold contentChanged apply at h_mut
   by_cases h_cond : r.decision = Decision.accept ∧ stable r
   · exact h_cond.left
   · simp [h_cond] at h_mut
 
 theorem accept_requires_stability
   (s : State) (r : VerifierResult) (nextH : Nat)
-  (h_mut : (apply s r nextH).post ≠ (apply s r nextH).pre) :
+  (h_mut : contentChanged (apply s r nextH).pre (apply s r nextH).post) :
   stable r := by
-  unfold apply at h_mut
+  unfold contentChanged apply at h_mut
   by_cases h_cond : r.decision = Decision.accept ∧ stable r
   · exact h_cond.right
   · simp [h_cond] at h_mut

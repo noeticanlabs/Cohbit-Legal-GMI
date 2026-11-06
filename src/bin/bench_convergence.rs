@@ -1,17 +1,19 @@
-use cohbit_legal_gmi::*;
-use cohbit_legal_gmi::manifold::LegalManifold;
-use cohbit_legal_gmi::witness::LegalWitness;
-use cohbit_legal_gmi::verifier::VerificationConfig;
-use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
-use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
+use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
+use cohbit_legal_gmi::manifold::LegalManifold;
 use cohbit_legal_gmi::memory::LegalNpeMemory;
+use cohbit_legal_gmi::reference::{
+    Jurisdiction, JurisdictionLevel, LegalReference, ProceduralStatus,
+};
+use cohbit_legal_gmi::verifier::VerificationConfig;
+use cohbit_legal_gmi::witness::LegalWitness;
+use cohbit_legal_gmi::*;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use num_rational::BigRational;
-use num_traits::FromPrimitive;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LegalBenchEntry {
@@ -30,18 +32,27 @@ fn main() -> anyhow::Result<()> {
 
     // Pre-populate references from the dataset
     // (Simulating a world model where the NPE has seen these citations)
-    let entries: Vec<LegalBenchEntry> = reader.lines()
+    let entries: Vec<LegalBenchEntry> = reader
+        .lines()
         .map(|l| serde_json::from_str(&l.unwrap()).unwrap())
         .collect();
 
     for entry in &entries {
-        refs.insert(entry.answer.clone(), LegalReference {
-            id: ReferenceId("ref".into()),
-            citation: entry.answer.clone(),
-            jurisdiction: Jurisdiction { court: "US Federal".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
-            source_text: Some(format!("Source for {}: {}", entry.answer, entry.text)),
-            procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
-        });
+        refs.insert(
+            entry.answer.clone(),
+            LegalReference {
+                id: ReferenceId("ref".into()),
+                citation: entry.answer.clone(),
+                jurisdiction: Jurisdiction {
+                    court: "US Federal".into(),
+                    region: "US".into(),
+                    level: JurisdictionLevel::Appellate,
+                },
+                source_text: Some(format!("Source for {}: {}", entry.answer, entry.text)),
+                procedural_status: ProceduralStatus::GoodLaw,
+                ..Default::default()
+            },
+        );
     }
 
     let adapter = MockLegalStatusAdapter {
@@ -55,7 +66,11 @@ fn main() -> anyhow::Result<()> {
 
     for (i, entry) in entries.iter().enumerate() {
         let manifold = LegalManifold::new(ProceduralPosture {
-            forum: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
+            forum: Jurisdiction {
+                court: "Supreme".into(),
+                region: "US".into(),
+                level: JurisdictionLevel::Supreme,
+            },
             matter_type: "Metric Test".into(),
             stage: "Audit".into(),
         });
@@ -84,9 +99,14 @@ fn main() -> anyhow::Result<()> {
                 cited_reference: Some(LegalReference {
                     id: ReferenceId("ref".into()),
                     citation: cit.clone(),
-                    jurisdiction: Jurisdiction { court: "US Federal".into(), region: "US".into(), level: JurisdictionLevel::Appellate },
+                    jurisdiction: Jurisdiction {
+                        court: "US Federal".into(),
+                        region: "US".into(),
+                        level: JurisdictionLevel::Appellate,
+                    },
                     source_text: Some(txt.clone()),
-                    procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
+                    procedural_status: ProceduralStatus::GoodLaw,
+                    ..Default::default()
                 }),
                 support_score: Some("1".to_string()),
                 ..setup_empty_witness()
@@ -96,12 +116,22 @@ fn main() -> anyhow::Result<()> {
                 support_threshold: "0.5".into(),
                 allow_unknown_good_law: true,
                 require_conflict_disclosure: true,
+                target_jurisdiction: None,
+                verification_time: "2026-11-06T00:00:00Z".into(),
+                max_status_age_days: 365,
                 valuation_config: valuation::ValuationConfig::default(),
             };
 
             // Apply transition
-            let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, BigRational::from_i64(i as i64).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
-            
+            let (_, cohbit) = cohbit::apply(
+                manifold.clone(),
+                witness,
+                &config,
+                BigRational::from_i64(i as i64).unwrap(),
+                BigRational::from_i64(0).unwrap(),
+                Some(&adapter),
+            )?;
+
             // NPE learns from the result
             memory.ingest(&cohbit.receipt);
         }
@@ -111,9 +141,15 @@ fn main() -> anyhow::Result<()> {
     println!("Total Steps (Decisions):  {}", memory.total_steps);
     println!("Total Successes:          {}", memory.total_success);
     println!("Total Rejections:         {}", memory.total_rejections);
-    println!("");
-    println!("Multi-view Rate:          {:.2} candidates/step", memory.multi_view_rate());
-    println!("Quick-to-Correct Ratio:   {:.2} steps/correction", memory.quick_to_correct_ratio());
+    println!();
+    println!(
+        "Multi-view Rate:          {:.2} candidates/step",
+        memory.multi_view_rate()
+    );
+    println!(
+        "Quick-to-Correct Ratio:   {:.2} steps/correction",
+        memory.quick_to_correct_ratio()
+    );
     println!("-----------------------------------------");
 
     Ok(())
@@ -121,7 +157,19 @@ fn main() -> anyhow::Result<()> {
 
 fn setup_empty_witness() -> LegalWitness {
     LegalWitness {
-        proposed_claim: LegalClaim { id: ClaimId("stub".into()), text: "".into(), cited_reference: None, quoted_text: None, authority_label: AuthorityLabel::Advisory, inference: InferenceKind::UnsupportedHypothesis },
-        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], ..Default::default()
+        proposed_claim: LegalClaim {
+            id: ClaimId("stub".into()),
+            text: "".into(),
+            cited_reference: None,
+            quoted_text: None,
+            authority_label: AuthorityLabel::Advisory,
+            inference: InferenceKind::UnsupportedHypothesis,
+        },
+        cited_reference: None,
+        support_score: None,
+        contrary_authorities: vec![],
+        user_asserted_good_law: None,
+        verifier_notes: vec![],
+        ..Default::default()
     }
 }

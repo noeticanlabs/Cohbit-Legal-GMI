@@ -1,40 +1,14 @@
-# CohBit Legal GMI: Placeholder & Mock Data Audit
+# CohBit Legal GMI — Mock and Placeholder Audit
 
-This report summarizes the remaining "Skeletal" or "Placeholder" components in the system to ensure full transparency regarding the kernel's current "Hardened" status.
+| Component | Classification | Restriction |
+|---|---|---|
+| `MockLegalStatusAdapter` | `TestOnly` | Cannot cross verified production admission |
+| `LocalTextSourceAdapter` | `LocalUnverified` | Source presence is not authoritative legal status |
+| `LocalPdfSourceAdapter` | `LocalUnverified` | Defaults jurisdiction and status to `Unknown` |
+| `MockGitAnchorAdapter` | Simulation | Does not create an external Git commitment |
+| benchmark fixtures | Development evidence | Must not be described as certification |
+| human-reviewed links | Recorded human judgment | Not a formal proof of legal truth |
 
-## 1. Algorithmic Hardening (The Admissibility Gauntlet)
+Remaining work includes authoritative licensed sources, independent held-out evaluation, deployment privacy/access/retention testing, signing-key lifecycle procedures, and human-review governance.
 
-All reasoning layers have been promoted to **V1 Production Standard**:
-
-| Component | Logic Status | Hardening Status |
-| :--- | :--- | :--- |
-| **C4: Jurisdictional Validity** | Fully implemented hierarchy checks for V1. | [HARDENED] |
-| **C6: Inference Validity** | Structural soundess verified for commitment. | [HARDENED] |
-
-## 2. Infrastructure Productionization
-
-| Component | Status | Purpose |
-| :--- | :--- | :--- |
-| **`GitAnchorAdapter`** | V1 Standard | Functional simulation of git-based root anchoring with bitwise-exact metadata. |
-| **`MockLegalStatusAdapter`** | Hardened Mock | Provides deterministic responses for testing; production-ready for CI. |
-
-## 3. Data Integrity Audit
-
-| Data Source | Quality | Type |
-| :--- | :--- | :--- |
-| **LegalBench Sample** | High (Ground Truth) | Real-world legal reasoning dataset. |
-| **Privacy Proposals** | High (Real Case Law) | Katz, Griswold, and Terry v. Ohio citations. |
-| **Benchmark Receipts** | High (Certified) | Cryptographic proofs of kernel performance. |
-
-## 4. Documentation Cleanup
-
-All `[SKELETAL]` and `[PLACEHOLDER]` tags have been removed from:
-- `README.md`
-- `ARCHITECTURE.md`
-- `src/verifier.rs`
-- `src/main.rs`
-
----
-
-## Audit Verdict: **PRODUCTION GRADE (V1)**
-The system is now fully hardened across its **Grounding**, **Accounting**, and **Reasoning** layers. The transition to `BigRational` arithmetic is complete, and all CLI/Infrastructure components are functional beyond prototyping.
+Verdict: research prototype with strengthened admission, persistence, formal, and bundle-integrity boundaries. External legal or advocacy deployment remains blocked.

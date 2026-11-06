@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
 use crate::{
-    reference::{LegalReference, ProceduralStatus},
     error::GmiError,
     receipt::stable_hash,
+    reference::{LegalReference, ProceduralStatus},
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,17 +63,34 @@ pub struct StatusTrace {
     pub trace_hash: String,
 }
 
+pub fn verify_status_trace_hash(trace: &StatusTrace) -> bool {
+    let mut canonical = trace.clone();
+    let supplied = std::mem::take(&mut canonical.trace_hash);
+    !supplied.is_empty() && supplied == stable_hash(&canonical)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdapterTrace {
     pub citation: String,
     pub adapter_name: String,
     pub adapter_version: String,
     pub resolved_reference_hash: String,
+    pub resolved_source_id: crate::ReferenceId,
+    pub resolved_jurisdiction: crate::reference::Jurisdiction,
     pub extracted_text_hash: String,
-    pub quote_span: Option<QuoteSpan>, 
-    pub status_trace: Option<StatusTrace>, 
+    pub quote_span: Option<QuoteSpan>,
+    pub status_trace: Option<StatusTrace>,
     pub procedural_status: ProceduralStatus,
     pub status_source: String,
+    pub adapter_trust: AdapterTrust,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum AdapterTrust {
+    TestOnly,
+    #[default]
+    LocalUnverified,
+    Verified,
 }
 
 pub trait LegalSourceAdapter {
@@ -84,6 +101,9 @@ pub trait LegalSourceAdapter {
 
     fn name(&self) -> String;
     fn version(&self) -> String;
+    fn trust_level(&self) -> AdapterTrust {
+        AdapterTrust::LocalUnverified
+    }
 
     fn get_page_at_offset(&self, citation: &str, offset: usize) -> Option<u32> {
         let _ = citation;
@@ -105,13 +125,16 @@ pub struct LocalTextSourceAdapter {
 
 impl LegalSourceAdapter for LocalTextSourceAdapter {
     fn resolve_reference(&self, citation: &str) -> Result<LegalReference, AdapterError> {
-        self.references.get(citation)
+        self.references
+            .get(citation)
             .cloned()
             .ok_or_else(|| AdapterError::ReferenceNotFound(citation.to_string()))
     }
 
     fn extract_source_text(&self, reference: &LegalReference) -> Result<String, AdapterError> {
-        reference.source_text.clone()
+        reference
+            .source_text
+            .clone()
             .ok_or_else(|| AdapterError::SourceTextUnavailable(reference.citation.clone()))
     }
 
@@ -134,12 +157,16 @@ impl LegalSourceAdapter for LocalTextSourceAdapter {
         Ok(trace)
     }
 
-    fn name(&self) -> String { "LocalTextSourceAdapter".to_string() }
-    fn version(&self) -> String { "1.0.0".to_string() }
+    fn name(&self) -> String {
+        "LocalTextSourceAdapter".to_string()
+    }
+    fn version(&self) -> String {
+        "1.0.0".to_string()
+    }
 }
 
 pub struct LocalPdfSourceAdapter {
-    pub file_map: HashMap<String, Vec<PdfPage>>, 
+    pub file_map: HashMap<String, Vec<PdfPage>>,
 }
 
 impl LegalSourceAdapter for LocalPdfSourceAdapter {
@@ -151,10 +178,10 @@ impl LegalSourceAdapter for LocalPdfSourceAdapter {
                 jurisdiction: crate::reference::Jurisdiction {
                     court: "Unknown".into(),
                     region: "Unknown".into(),
-                    level: crate::reference::JurisdictionLevel::Appellate,
+                    level: crate::reference::JurisdictionLevel::Unknown,
                 },
                 source_text: None,
-                procedural_status: ProceduralStatus::GoodLaw,
+                procedural_status: ProceduralStatus::Unknown,
                 citation_confidence: None,
                 counsel_id: None,
                 law_firm_id: None,
@@ -165,19 +192,26 @@ impl LegalSourceAdapter for LocalPdfSourceAdapter {
     }
 
     fn extract_source_text(&self, reference: &LegalReference) -> Result<String, AdapterError> {
-        self.file_map.get(&reference.citation)
-            .map(|pages| pages.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("\n"))
+        self.file_map
+            .get(&reference.citation)
+            .map(|pages| {
+                pages
+                    .iter()
+                    .map(|p| p.text.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
             .ok_or_else(|| AdapterError::SourceTextUnavailable(reference.citation.clone()))
     }
 
     fn check_status(&self, _reference: &LegalReference) -> Result<ProceduralStatus, AdapterError> {
-        Ok(ProceduralStatus::GoodLaw)
+        Ok(ProceduralStatus::Unknown)
     }
 
     fn get_status_trace(&self, reference: &LegalReference) -> Result<StatusTrace, AdapterError> {
         let mut trace = StatusTrace {
             citation: reference.citation.clone(),
-            status: ProceduralStatus::GoodLaw,
+            status: ProceduralStatus::Unknown,
             checked_at: "2026-05-04".into(),
             status_source: self.name(),
             status_source_version: self.version(),
@@ -188,14 +222,18 @@ impl LegalSourceAdapter for LocalPdfSourceAdapter {
         Ok(trace)
     }
 
-    fn name(&self) -> String { "LocalPdfSourceAdapter".to_string() }
-    fn version(&self) -> String { "1.2.0".to_string() }
+    fn name(&self) -> String {
+        "LocalPdfSourceAdapter".to_string()
+    }
+    fn version(&self) -> String {
+        "1.2.0".to_string()
+    }
 
     fn get_page_at_offset(&self, citation: &str, offset: usize) -> Option<u32> {
         let pages = self.file_map.get(citation)?;
-        pages.iter()
-            .filter(|p| p.start_offset <= offset)
-            .last()
+        pages
+            .iter()
+            .rfind(|p| p.start_offset <= offset)
             .map(|p| p.number)
     }
 }
@@ -210,13 +248,16 @@ pub struct MockLegalStatusAdapter {
 
 impl LegalSourceAdapter for MockLegalStatusAdapter {
     fn resolve_reference(&self, citation: &str) -> Result<LegalReference, AdapterError> {
-        self.reference_store.get(citation)
+        self.reference_store
+            .get(citation)
             .cloned()
             .ok_or_else(|| AdapterError::ReferenceNotFound(citation.to_string()))
     }
 
     fn extract_source_text(&self, reference: &LegalReference) -> Result<String, AdapterError> {
-        reference.source_text.clone()
+        reference
+            .source_text
+            .clone()
             .ok_or_else(|| AdapterError::SourceTextUnavailable(reference.citation.clone()))
     }
 
@@ -230,8 +271,12 @@ impl LegalSourceAdapter for MockLegalStatusAdapter {
 
     fn get_status_trace(&self, reference: &LegalReference) -> Result<StatusTrace, AdapterError> {
         let status = self.check_status(reference)?;
-        let contrary_treatment = self.treatment_overrides.get(&reference.citation).cloned().unwrap_or_default();
-        
+        let contrary_treatment = self
+            .treatment_overrides
+            .get(&reference.citation)
+            .cloned()
+            .unwrap_or_default();
+
         let mut trace = StatusTrace {
             citation: reference.citation.clone(),
             status,
@@ -245,6 +290,13 @@ impl LegalSourceAdapter for MockLegalStatusAdapter {
         Ok(trace)
     }
 
-    fn name(&self) -> String { "MockLegalStatusAdapter".to_string() }
-    fn version(&self) -> String { "2.0.0".to_string() }
+    fn name(&self) -> String {
+        "MockLegalStatusAdapter".to_string()
+    }
+    fn version(&self) -> String {
+        "2.0.0".to_string()
+    }
+    fn trust_level(&self) -> AdapterTrust {
+        AdapterTrust::TestOnly
+    }
 }

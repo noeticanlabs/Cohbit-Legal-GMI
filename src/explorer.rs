@@ -1,5 +1,6 @@
+use crate::proposal::{CandidateClaim, LegalProposal};
+use crate::verifier::VerificationDecision;
 use serde::{Deserialize, Serialize};
-use crate::proposal::{LegalProposal, CandidateClaim};
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,6 +9,8 @@ pub struct ExplorationSpace {
     pub candidate_queue: VecDeque<CandidateClaim>,
     pub accepted_claims_ids: Vec<String>,
     pub rejected_claims_ids: Vec<String>,
+    #[serde(default)]
+    pub escalated_claims_ids: Vec<String>,
 }
 
 impl ExplorationSpace {
@@ -17,6 +20,7 @@ impl ExplorationSpace {
             candidate_queue: VecDeque::new(),
             accepted_claims_ids: vec![],
             rejected_claims_ids: vec![],
+            escalated_claims_ids: vec![],
         }
     }
 
@@ -37,5 +41,19 @@ impl ExplorationSpace {
         } else {
             self.rejected_claims_ids.push(text.to_string());
         }
+    }
+
+    pub fn record_outcome(&mut self, text: &str, decision: &VerificationDecision) {
+        match decision {
+            VerificationDecision::Accept => self.accepted_claims_ids.push(text.to_string()),
+            VerificationDecision::Reject => self.rejected_claims_ids.push(text.to_string()),
+            VerificationDecision::Escalate => self.escalated_claims_ids.push(text.to_string()),
+        }
+    }
+}
+
+impl Default for ExplorationSpace {
+    fn default() -> Self {
+        Self::new()
     }
 }

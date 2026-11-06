@@ -1,11 +1,11 @@
+use crate::persistence::ChainManifest;
+use crate::receipt::stable_hash;
+use anyhow::Result;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use anyhow::Result;
-use chrono::Utc;
-use crate::receipt::stable_hash;
-use crate::persistence::ChainManifest;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnchorReceipt {
@@ -58,7 +58,7 @@ impl RootAnchor for LocalAnchorAdapter {
             .create(true)
             .append(true)
             .open(log_path)?;
-        
+
         writeln!(file, "{}", serde_json::to_string(&receipt)?)?;
 
         Ok(receipt)
@@ -66,8 +66,8 @@ impl RootAnchor for LocalAnchorAdapter {
 
     fn verify_anchor(&self, anchor: &AnchorReceipt, manifest: &ChainManifest) -> Result<bool> {
         let current_manifest_hash = stable_hash(manifest);
-        Ok(anchor.root_commitment == manifest.root_commitment && 
-           anchor.manifest_hash == current_manifest_hash)
+        Ok(anchor.root_commitment == manifest.root_commitment
+            && anchor.manifest_hash == current_manifest_hash)
     }
 }
 
@@ -80,7 +80,9 @@ pub struct MockGitAnchorAdapter {
 
 impl MockGitAnchorAdapter {
     pub fn new(repo_path: impl AsRef<Path>) -> Self {
-        Self { repo_path: repo_path.as_ref().to_path_buf() }
+        Self {
+            repo_path: repo_path.as_ref().to_path_buf(),
+        }
     }
 }
 
@@ -88,7 +90,7 @@ impl RootAnchor for MockGitAnchorAdapter {
     fn anchor_root(&self, manifest: &ChainManifest) -> Result<AnchorReceipt> {
         let manifest_hash = stable_hash(manifest);
         let anchored_at = Utc::now().to_rfc3339();
-        
+
         // In a real implementation, we would git add/commit the manifest or a commitment file.
         // For this M11 prototype, we'll simulate the git backend reference with a mock commit hash.
         let backend_reference = stable_hash(&format!("git_commit_{}", manifest.root_commitment));
@@ -108,7 +110,7 @@ impl RootAnchor for MockGitAnchorAdapter {
 
     fn verify_anchor(&self, anchor: &AnchorReceipt, manifest: &ChainManifest) -> Result<bool> {
         let current_manifest_hash = stable_hash(manifest);
-        Ok(anchor.root_commitment == manifest.root_commitment && 
-           anchor.manifest_hash == current_manifest_hash)
+        Ok(anchor.root_commitment == manifest.root_commitment
+            && anchor.manifest_hash == current_manifest_hash)
     }
 }

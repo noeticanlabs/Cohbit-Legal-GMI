@@ -1,12 +1,10 @@
-use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 use crate::{
     claim::LegalClaim,
-    EvidenceId, ReceiptHash, ReferenceId, StateHash,
     reference::{Jurisdiction, LegalReference},
-    witness::LegalWitness,
-    verifier::VerifierResult,
+    EvidenceId, ReceiptHash, ReferenceId, StateHash,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,11 +14,11 @@ pub struct LegalManifold {
     pub jurisdiction_graph: Vec<JurisdictionEdge>,
     pub procedural_posture: ProceduralPosture,
     pub evidence: BTreeMap<EvidenceId, EvidenceItem>,
-    
+
     // Core Physics (Numerical Sobriety: Rational-based)
     pub valuation: String,
     pub step_index: u64,
-    
+
     pub pre_state_hash: StateHash,
     pub post_state_hash: StateHash,
     pub last_receipt_hash: Option<ReceiptHash>,
@@ -30,18 +28,22 @@ pub struct LegalManifold {
 }
 
 impl LegalManifold {
-    pub fn valuation_rat(&self) -> num_rational::BigRational {
-        crate::valuation::parse_rational(&self.valuation)
+    pub fn valuation_rat(&self) -> Result<num_rational::BigRational, anyhow::Error> {
+        crate::valuation::try_parse_rational(&self.valuation)
     }
 }
 
 /// A canonical view of the manifold's committed state for hashing
 #[derive(Serialize)]
 struct ManifoldCommitmentView<'a> {
+    domain: &'static str,
+    schema_version: &'static str,
     claims: &'a Vec<LegalClaim>,
     references: &'a BTreeMap<ReferenceId, LegalReference>,
+    jurisdiction_graph: &'a Vec<JurisdictionEdge>,
     valuation: &'a String,
     procedural_posture: &'a ProceduralPosture,
+    evidence: &'a BTreeMap<EvidenceId, EvidenceItem>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,25 +94,15 @@ impl LegalManifold {
 
     pub fn get_state_hash(&self) -> StateHash {
         let view = ManifoldCommitmentView {
+            domain: "cohbit-legal-gmi/content-state/v2",
+            schema_version: "2.0.0",
             claims: &self.claims,
             references: &self.references,
+            jurisdiction_graph: &self.jurisdiction_graph,
             valuation: &self.valuation,
             procedural_posture: &self.procedural_posture,
+            evidence: &self.evidence,
         };
         StateHash(crate::receipt::stable_hash(&view))
-    }
-
-    pub fn compute_receipt_hash(&self, witness: &LegalWitness, result: &VerifierResult) -> ReceiptHash {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(self.pre_state_hash.0.as_bytes());
-        hasher.update(self.post_state_hash.0.as_bytes());
-        hasher.update(serde_json::to_string(witness).unwrap_or_default().as_bytes());
-        hasher.update(serde_json::to_string(result).unwrap_or_default().as_bytes());
-        
-        if let Some(last) = &self.last_receipt_hash {
-            hasher.update(last.0.as_bytes());
-        }
-
-        ReceiptHash(hasher.finalize().to_hex().to_string())
     }
 }

@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use crate::{ClaimId, ReferenceId};
 use crate::claim::{AuthorityLabel, InferenceKind};
-use crate::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
+use crate::reference::{Jurisdiction, JurisdictionLevel, LegalReference, ProceduralStatus};
+use crate::{ClaimId, ReferenceId};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalProposal {
@@ -29,10 +29,10 @@ impl CandidateClaim {
             jurisdiction: Jurisdiction {
                 court: "Unresolved".to_string(),
                 region: "Unresolved".to_string(),
-                level: JurisdictionLevel::Appellate,
+                level: JurisdictionLevel::Unknown,
             },
             source_text: None,
-            procedural_status: ProceduralStatus::GoodLaw,
+            procedural_status: ProceduralStatus::Unknown,
             citation_confidence: None,
             counsel_id: None,
             law_firm_id: None,
@@ -48,11 +48,16 @@ impl CandidateClaim {
                 inference: self.inference.clone(),
             },
             cited_reference,
-            support_score: Some(self.model_confidence.clone()),
+            // Generator confidence is proposal metadata, not verifier-authorized
+            // evidentiary support. Only an independent verifier may populate a
+            // support score after resolving and evaluating source evidence.
+            support_score: None,
             contrary_authorities: vec![],
             user_asserted_good_law: None,
             verifier_notes: vec![format!("Model confidence: {}", self.model_confidence)],
             review_status: None,
+            evidence_links: vec![],
+            adverse_authority_search: None,
         }
     }
 }

@@ -1,10 +1,30 @@
-use serde::{Deserialize, Serialize};
-use crate::{
-    claim::LegalClaim,
-    reference::LegalReference,
-};
+use crate::{claim::LegalClaim, reference::LegalReference};
 use num_rational::BigRational;
-use num_traits::FromPrimitive;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum EvidenceVerificationMethod {
+    ExactQuotation,
+    HumanReviewed { reviewer_id: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ClaimEvidenceLink {
+    pub source_id: crate::ReferenceId,
+    pub passage_start: usize,
+    pub passage_end: usize,
+    pub claim_fragment: String,
+    pub verification_method: EvidenceVerificationMethod,
+    pub verifier_version: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AdverseAuthoritySearch {
+    pub scope: String,
+    pub searched_at: String,
+    pub method: String,
+    pub result_citations: Vec<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum InternalReviewStatus {
@@ -23,13 +43,19 @@ pub struct LegalWitness {
     pub user_asserted_good_law: Option<bool>,
     pub verifier_notes: Vec<String>,
     pub review_status: Option<InternalReviewStatus>,
+    #[serde(default)]
+    pub evidence_links: Vec<ClaimEvidenceLink>,
+    #[serde(default)]
+    pub adverse_authority_search: Option<AdverseAuthoritySearch>,
 }
 
 impl LegalWitness {
-    pub fn support_score_rat(&self) -> BigRational {
-        self.support_score.as_ref()
-            .map(|s| crate::valuation::parse_rational(s))
-            .unwrap_or_else(|| BigRational::from_i64(0).unwrap())
+    pub fn support_score_rat(&self) -> Result<BigRational, anyhow::Error> {
+        let score = self
+            .support_score
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Support score is missing"))?;
+        crate::valuation::try_parse_rational(score)
     }
 }
 impl Default for LegalWitness {
@@ -49,6 +75,8 @@ impl Default for LegalWitness {
             user_asserted_good_law: None,
             verifier_notes: vec![],
             review_status: None,
+            evidence_links: vec![],
+            adverse_authority_search: None,
         }
     }
 }

@@ -1,18 +1,22 @@
-use crate::proposal::{LegalProposal, CandidateClaim};
 use crate::claim::{AuthorityLabel, InferenceKind};
 use crate::error::GmiError;
 use crate::memory::LegalNpeMemory;
+use crate::proposal::{CandidateClaim, LegalProposal};
 
 /// The LLM Hook Trait
-/// 
-/// Allows the NPE to swap between a synthetic generator, a local model, 
+///
+/// Allows the NPE to swap between a synthetic generator, a local model,
 /// or a remote API.
 pub trait LegalLlmHook {
-    fn generate_proposal(&self, prompt: &str, memory_guidance: &str) -> Result<LegalProposal, GmiError>;
+    fn generate_proposal(
+        &self,
+        prompt: &str,
+        memory_guidance: &str,
+    ) -> Result<LegalProposal, GmiError>;
 }
 
 /// Neural Proposal Engine (NPE) for Legal GMI
-/// 
+///
 /// The NPE generates candidate legal trajectories by interacting with an LLM
 /// through a secure hook. It uses adaptive memory to guide its brainstorming.
 pub struct LegalNpe<H: LegalLlmHook> {
@@ -22,7 +26,7 @@ pub struct LegalNpe<H: LegalLlmHook> {
 
 impl<H: LegalLlmHook> LegalNpe<H> {
     pub fn new(hook: H) -> Self {
-        Self { 
+        Self {
             hook,
             memory: LegalNpeMemory::new(),
         }
@@ -33,8 +37,16 @@ impl<H: LegalLlmHook> LegalNpe<H> {
         let guidance = format!(
             "Total steps: {}, Success rate: {:.2}. Hallucination traps to avoid: {:?}",
             self.memory.total_steps,
-            if self.memory.total_steps == 0 { 0.0 } else { self.memory.total_success as f64 / self.memory.total_steps as f64 },
-            self.memory.hallucination_traps.keys().take(10).collect::<Vec<_>>()
+            if self.memory.total_steps == 0 {
+                0.0
+            } else {
+                self.memory.total_success as f64 / self.memory.total_steps as f64
+            },
+            self.memory
+                .hallucination_traps
+                .keys()
+                .take(10)
+                .collect::<Vec<_>>()
         );
 
         self.hook.generate_proposal(context, &guidance)
@@ -71,7 +83,7 @@ impl LegalLlmHook for SyntheticLegalNpe {
                     authority_label: AuthorityLabel::Binding,
                     inference: InferenceKind::DirectQuotation,
                     model_confidence: "0.88".into(),
-                }
+                },
             ],
         })
     }

@@ -1,13 +1,15 @@
-use cohbit_legal_gmi::*;
-use cohbit_legal_gmi::manifold::LegalManifold;
-use cohbit_legal_gmi::witness::LegalWitness;
-use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
-use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
-use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
-use std::collections::HashMap;
+use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
+use cohbit_legal_gmi::manifold::LegalManifold;
+use cohbit_legal_gmi::reference::{
+    Jurisdiction, JurisdictionLevel, LegalReference, ProceduralStatus,
+};
+use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
+use cohbit_legal_gmi::witness::LegalWitness;
+use cohbit_legal_gmi::*;
 use num_rational::BigRational;
 use num_traits::FromPrimitive;
+use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
     println!("CohBit Legal GMI: Adversarial Attack & Defense Report");
@@ -21,18 +23,29 @@ fn main() -> anyhow::Result<()> {
     total_attacks += 1;
     println!("ATTACK 1: The Hallucinated Quote");
     println!("- Strategy: Cite a real case but provide a fake, LLM-hallucinated quote.");
-    
+
     let mut manifold = setup_manifold();
     let mut refs = HashMap::new();
-    refs.insert("389 U.S. 347".into(), LegalReference {
-        id: ReferenceId("r1".into()),
-        citation: "389 U.S. 347".into(),
-        jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
-        source_text: Some("Actual text of Katz v. United States...".into()),
-        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
-    });
-    let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
-    
+    refs.insert(
+        "389 U.S. 347".into(),
+        LegalReference {
+            id: ReferenceId("r1".into()),
+            citation: "389 U.S. 347".into(),
+            jurisdiction: Jurisdiction {
+                court: "Supreme".into(),
+                region: "US".into(),
+                level: JurisdictionLevel::Supreme,
+            },
+            source_text: Some("Actual text of Katz v. United States...".into()),
+            procedural_status: ProceduralStatus::GoodLaw,
+            ..Default::default()
+        },
+    );
+    let adapter = MockLegalStatusAdapter {
+        reference_store: refs,
+        ..Default::default()
+    };
+
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
             id: ClaimId("c1".into()),
@@ -47,9 +60,19 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let result = cohbit::apply(manifold, witness, &setup_strict_config(), BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let result = cohbit::apply(
+        manifold,
+        witness,
+        &setup_strict_config(),
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     if result.1.receipt.decision == VerificationDecision::Reject {
-        println!("[DEFENDED] Verifier rejected hallucinated quote: {:?}\n", result.1.verifier_result.c2_citation_binding.reason);
+        println!(
+            "[DEFENDED] Verifier rejected hallucinated quote: {:?}\n",
+            result.1.verifier_result.c2_citation_binding.reason
+        );
         success_count += 1;
     } else {
         println!("[FAILED  ] Verifier accepted a hallucination!\n");
@@ -59,18 +82,29 @@ fn main() -> anyhow::Result<()> {
     total_attacks += 1;
     println!("ATTACK 2: The Zombie Precedent");
     println!("- Strategy: Use a valid quote from a case that has been OVERRULED.");
-    
+
     manifold = setup_manifold();
     let mut refs = HashMap::new();
-    refs.insert("Old Case".into(), LegalReference {
-        id: ReferenceId("r1".into()),
-        citation: "Old Case".into(),
-        jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
-        source_text: Some("This rule is now invalid.".into()),
-        procedural_status: ProceduralStatus::Overruled, ..Default::default()
-    });
-    let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
-    
+    refs.insert(
+        "Old Case".into(),
+        LegalReference {
+            id: ReferenceId("r1".into()),
+            citation: "Old Case".into(),
+            jurisdiction: Jurisdiction {
+                court: "Supreme".into(),
+                region: "US".into(),
+                level: JurisdictionLevel::Supreme,
+            },
+            source_text: Some("This rule is now invalid.".into()),
+            procedural_status: ProceduralStatus::Overruled,
+            ..Default::default()
+        },
+    );
+    let adapter = MockLegalStatusAdapter {
+        reference_store: refs,
+        ..Default::default()
+    };
+
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
             id: ClaimId("c2".into()),
@@ -85,9 +119,19 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let result = cohbit::apply(manifold, witness, &setup_strict_config(), BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let result = cohbit::apply(
+        manifold,
+        witness,
+        &setup_strict_config(),
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     if result.1.receipt.decision == VerificationDecision::Reject {
-        println!("[DEFENDED] Verifier rejected overruled precedent: {:?}\n", result.1.verifier_result.c5_procedural_status.reason);
+        println!(
+            "[DEFENDED] Verifier rejected overruled precedent: {:?}\n",
+            result.1.verifier_result.c5_procedural_status.reason
+        );
         success_count += 1;
     } else {
         println!("[FAILED  ] Verifier accepted zombie precedent!\n");
@@ -97,18 +141,29 @@ fn main() -> anyhow::Result<()> {
     total_attacks += 1;
     println!("ATTACK 3: The Stability Leak");
     println!("- Strategy: Propose a claim with high valuation delta but low evidentiary support.");
-    
+
     manifold = setup_manifold();
     let mut refs = HashMap::new();
-    refs.insert("Good Case".into(), LegalReference {
-        id: ReferenceId("r1".into()),
-        citation: "Good Case".into(),
-        jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
-        source_text: Some("Valid text.".into()),
-        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
-    });
-    let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
-    
+    refs.insert(
+        "Good Case".into(),
+        LegalReference {
+            id: ReferenceId("r1".into()),
+            citation: "Good Case".into(),
+            jurisdiction: Jurisdiction {
+                court: "Supreme".into(),
+                region: "US".into(),
+                level: JurisdictionLevel::Supreme,
+            },
+            source_text: Some("Valid text.".into()),
+            procedural_status: ProceduralStatus::GoodLaw,
+            ..Default::default()
+        },
+    );
+    let adapter = MockLegalStatusAdapter {
+        reference_store: refs,
+        ..Default::default()
+    };
+
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
             id: ClaimId("c3".into()),
@@ -127,26 +182,50 @@ fn main() -> anyhow::Result<()> {
     let mut config = setup_strict_config();
     config.support_threshold = "0.9".into();
 
-    let result = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let result = cohbit::apply(
+        manifold,
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     if result.1.receipt.decision == VerificationDecision::Reject {
-        println!("[DEFENDED] Verifier rejected claim with insufficient support (Stability Law): {:?}\n", result.1.verifier_result.c3_claim_source_alignment.reason);
+        println!(
+            "[DEFENDED] Verifier rejected claim with insufficient support (Stability Law): {:?}\n",
+            result.1.verifier_result.c3_claim_source_alignment.reason
+        );
         success_count += 1;
     } else {
         println!("[FAILED  ] Verifier leaked certainty!\n");
     }
 
     println!("-----------------------------------------------------");
-    println!("FINAL REPORT: {}/{} attacks DEFENDED.", success_count, total_attacks);
+    println!(
+        "FINAL REPORT: {}/{} attacks DEFENDED.",
+        success_count, total_attacks
+    );
     let score = (success_count as f64 / total_attacks as f64) * 100.0;
     println!("Defense Score: {:.0}%", score);
-    println!("Kernel Status: {}", if score > 99.0 { "HARDENED" } else { "HARDENING REQUIRED" });
+    println!(
+        "Kernel Status: {}",
+        if score > 99.0 {
+            "HARDENED"
+        } else {
+            "HARDENING REQUIRED"
+        }
+    );
 
     Ok(())
 }
 
 fn setup_manifold() -> LegalManifold {
     LegalManifold::new(ProceduralPosture {
-        forum: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
+        forum: Jurisdiction {
+            court: "Supreme".into(),
+            region: "US".into(),
+            level: JurisdictionLevel::Supreme,
+        },
         matter_type: "Audit".into(),
         stage: "Red-Team".into(),
     })
@@ -157,6 +236,9 @@ fn setup_strict_config() -> VerificationConfig {
         support_threshold: "0.5".into(),
         allow_unknown_good_law: false,
         require_conflict_disclosure: true,
+        target_jurisdiction: None,
+        verification_time: "2026-11-06T00:00:00Z".into(),
+        max_status_age_days: 365,
         valuation_config: valuation::ValuationConfig::default(),
     }
 }
@@ -172,6 +254,7 @@ fn setup_empty_witness() -> LegalWitness {
             inference: InferenceKind::UnsupportedHypothesis,
         },
         cited_reference: None,
-        verifier_notes: vec![], ..Default::default()
+        verifier_notes: vec![],
+        ..Default::default()
     }
 }

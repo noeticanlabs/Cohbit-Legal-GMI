@@ -1,15 +1,17 @@
-use cohbit_legal_gmi::*;
-use cohbit_legal_gmi::manifold::LegalManifold;
-use cohbit_legal_gmi::witness::LegalWitness;
-use cohbit_legal_gmi::verifier::VerificationConfig;
-use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
-use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
+use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
+use cohbit_legal_gmi::manifold::LegalManifold;
+use cohbit_legal_gmi::reference::{
+    Jurisdiction, JurisdictionLevel, LegalReference, ProceduralStatus,
+};
+use cohbit_legal_gmi::verifier::VerificationConfig;
+use cohbit_legal_gmi::witness::LegalWitness;
+use cohbit_legal_gmi::*;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use num_rational::BigRational;
-use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     let output_dir = "fixtures/bench_receipts";
@@ -21,7 +23,7 @@ fn main() -> anyhow::Result<()> {
 
     let manifold = setup_manifold();
     let config = setup_config();
-    
+
     // 1. A Valid Receipt (Benchmark 1)
     let mut refs = HashMap::new();
     let ref1 = LegalReference {
@@ -29,11 +31,15 @@ fn main() -> anyhow::Result<()> {
         citation: "100 U.S. 1".into(),
         jurisdiction: setup_jurisdiction(),
         source_text: Some("The core principle of the law...".into()),
-        procedural_status: ProceduralStatus::GoodLaw, ..Default::default()
+        procedural_status: ProceduralStatus::GoodLaw,
+        ..Default::default()
     };
     refs.insert("100 U.S. 1".into(), ref1.clone());
-    let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
-    
+    let adapter = MockLegalStatusAdapter {
+        reference_store: refs,
+        ..Default::default()
+    };
+
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
             id: ClaimId("bench_c1".into()),
@@ -48,9 +54,19 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let (_, cohbit) = cohbit::apply(manifold.clone(), witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let (_, cohbit) = cohbit::apply(
+        manifold.clone(),
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     let receipt_json = serde_json::to_string_pretty(&cohbit.receipt)?;
-    fs::write(format!("{}/accept_benchmark.json", output_dir), receipt_json)?;
+    fs::write(
+        format!("{}/accept_benchmark.json", output_dir),
+        receipt_json,
+    )?;
     println!("- Generated accept_benchmark.json");
 
     // 2. A Reject Receipt (Benchmark 2 - Hallucination)
@@ -68,33 +84,69 @@ fn main() -> anyhow::Result<()> {
         ..setup_empty_witness()
     };
 
-    let (_, cohbit_reject) = cohbit::apply(manifold, witness_reject, &config, BigRational::from_i64(1).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let (_, cohbit_reject) = cohbit::apply(
+        manifold,
+        witness_reject,
+        &config,
+        BigRational::from_i64(1).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     let reject_json = serde_json::to_string_pretty(&cohbit_reject.receipt)?;
     fs::write(format!("{}/reject_benchmark.json", output_dir), reject_json)?;
     println!("- Generated reject_benchmark.json");
 
-    println!("Benchmark receipts generated successfully at {}", output_dir);
+    println!(
+        "Benchmark receipts generated successfully at {}",
+        output_dir
+    );
 
     Ok(())
 }
 
 fn setup_manifold() -> LegalManifold {
     LegalManifold::new(ProceduralPosture {
-        forum: setup_jurisdiction(), matter_type: "Benchmark".into(), stage: "Archival".into(),
+        forum: setup_jurisdiction(),
+        matter_type: "Benchmark".into(),
+        stage: "Archival".into(),
     })
 }
 
 fn setup_jurisdiction() -> Jurisdiction {
-    Jurisdiction { court: "Supreme Court".into(), region: "US".into(), level: JurisdictionLevel::Supreme }
+    Jurisdiction {
+        court: "Supreme Court".into(),
+        region: "US".into(),
+        level: JurisdictionLevel::Supreme,
+    }
 }
 
 fn setup_config() -> VerificationConfig {
-    VerificationConfig { support_threshold: "0.5".into(), allow_unknown_good_law: true, require_conflict_disclosure: false, valuation_config: valuation::ValuationConfig::default() }
+    VerificationConfig {
+        support_threshold: "0.5".into(),
+        allow_unknown_good_law: true,
+        require_conflict_disclosure: false,
+        target_jurisdiction: None,
+        verification_time: "2026-11-06T00:00:00Z".into(),
+        max_status_age_days: 365,
+        valuation_config: valuation::ValuationConfig::default(),
+    }
 }
 
 fn setup_empty_witness() -> LegalWitness {
     LegalWitness {
-        proposed_claim: LegalClaim { id: ClaimId("stub".into()), text: "".into(), cited_reference: None, quoted_text: None, authority_label: AuthorityLabel::Advisory, inference: InferenceKind::UnsupportedHypothesis },
-        cited_reference: None, support_score: None, contrary_authorities: vec![], user_asserted_good_law: None, verifier_notes: vec![], ..Default::default()
+        proposed_claim: LegalClaim {
+            id: ClaimId("stub".into()),
+            text: "".into(),
+            cited_reference: None,
+            quoted_text: None,
+            authority_label: AuthorityLabel::Advisory,
+            inference: InferenceKind::UnsupportedHypothesis,
+        },
+        cited_reference: None,
+        support_score: None,
+        contrary_authorities: vec![],
+        user_asserted_good_law: None,
+        verifier_notes: vec![],
+        ..Default::default()
     }
 }

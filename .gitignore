@@ -1,7 +1,6 @@
 /target
 /target_legal
 /target_legal_adapters_2
-Cargo.lock
 .env
 
 # Data and logs

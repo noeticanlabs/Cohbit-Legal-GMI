@@ -1,13 +1,15 @@
-use cohbit_legal_gmi::*;
-use cohbit_legal_gmi::manifold::LegalManifold;
-use cohbit_legal_gmi::witness::{LegalWitness, InternalReviewStatus};
-use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
-use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
-use cohbit_legal_gmi::reference::{LegalReference, Jurisdiction, JurisdictionLevel, ProceduralStatus};
 use cohbit_legal_gmi::adapter::MockLegalStatusAdapter;
-use std::collections::HashMap;
+use cohbit_legal_gmi::claim::{AuthorityLabel, InferenceKind, LegalClaim};
+use cohbit_legal_gmi::manifold::LegalManifold;
+use cohbit_legal_gmi::reference::{
+    Jurisdiction, JurisdictionLevel, LegalReference, ProceduralStatus,
+};
+use cohbit_legal_gmi::verifier::{VerificationConfig, VerificationDecision};
+use cohbit_legal_gmi::witness::{InternalReviewStatus, LegalWitness};
+use cohbit_legal_gmi::*;
 use num_rational::BigRational;
 use num_traits::FromPrimitive;
+use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
     println!("CohBit Legal GMI: Commercial Accuracy & Detail Benchmark");
@@ -50,15 +52,20 @@ fn main() -> anyhow::Result<()> {
     }
 
     println!("\n=====================================================");
-    println!("OVERALL ACCURACY: {}/{} tests passed ({:.0}%)", passed_tests, total_tests, (passed_tests as f64 / total_tests as f64) * 100.0);
-    
+    println!(
+        "OVERALL ACCURACY: {}/{} tests passed ({:.0}%)",
+        passed_tests,
+        total_tests,
+        (passed_tests as f64 / total_tests as f64) * 100.0
+    );
+
     Ok(())
 }
 
 fn test_quote_fidelity() -> anyhow::Result<bool> {
     let manifold = setup_manifold();
     let config = setup_strict_config();
-    
+
     let mut refs = HashMap::new();
     let reference = LegalReference {
         id: ReferenceId("r1".into()),
@@ -69,8 +76,11 @@ fn test_quote_fidelity() -> anyhow::Result<bool> {
         ..Default::default()
     };
     refs.insert("Standard v. Precise".into(), reference.clone());
-    let adapter = MockLegalStatusAdapter { reference_store: refs, ..Default::default() };
-    
+    let adapter = MockLegalStatusAdapter {
+        reference_store: refs,
+        ..Default::default()
+    };
+
     // Perturbed Witness (Hallucination: "may" instead of "shall")
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
@@ -87,16 +97,23 @@ fn test_quote_fidelity() -> anyhow::Result<bool> {
         ..Default::default()
     };
 
-    let result = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter))?;
+    let result = cohbit::apply(
+        manifold,
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )?;
     Ok(result.1.receipt.decision == VerificationDecision::Reject)
 }
 
 fn test_support_realism() -> anyhow::Result<bool> {
     let manifold = setup_manifold();
     let config = setup_strict_config();
-    
+
     let _reference = LegalReference::default();
-    
+
     // Witness with high delta but low support
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
@@ -110,14 +127,21 @@ fn test_support_realism() -> anyhow::Result<bool> {
     };
 
     // The verifier should reject if support < threshold (default 0.5)
-    let result = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None)?;
+    let result = cohbit::apply(
+        manifold,
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        None,
+    )?;
     Ok(result.1.receipt.decision == VerificationDecision::Reject)
 }
 
 fn test_metadata_persistence() -> anyhow::Result<bool> {
     let manifold = setup_manifold();
     let config = setup_config();
-    
+
     let reference = LegalReference {
         id: ReferenceId("r1".into()),
         citation: "Commercial Case".into(),
@@ -128,37 +152,70 @@ fn test_metadata_persistence() -> anyhow::Result<bool> {
     };
 
     let witness = LegalWitness {
-        proposed_claim: LegalClaim { id: ClaimId("c3".into()), text: "Valid".into(), ..Default::default() },
+        proposed_claim: LegalClaim {
+            id: ClaimId("c3".into()),
+            text: "Valid".into(),
+            ..Default::default()
+        },
         cited_reference: Some(reference.clone()),
         review_status: Some(InternalReviewStatus::AdversarialAudit),
         ..Default::default()
     };
 
-    let (_, cohbit) = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), None)?;
-    
+    let (_, cohbit) = cohbit::apply(
+        manifold,
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        None,
+    )?;
+
     // Check if metadata is in the receipt's witness (via trace)
     let receipt_witness = &cohbit.receipt.trace.as_ref().unwrap().witness;
     let ref_meta = receipt_witness.cited_reference.as_ref().unwrap();
-    
-    Ok(ref_meta.counsel_id == Some("COUNSEL-99".into()) && 
-       ref_meta.law_firm_id == Some("FIRM-01".into()) &&
-       receipt_witness.review_status == Some(InternalReviewStatus::AdversarialAudit))
+
+    Ok(ref_meta.counsel_id == Some("COUNSEL-99".into())
+        && ref_meta.law_firm_id == Some("FIRM-01".into())
+        && receipt_witness.review_status == Some(InternalReviewStatus::AdversarialAudit))
 }
 
 fn setup_manifold() -> LegalManifold {
     LegalManifold::new(ProceduralPosture {
-        forum: setup_jurisdiction(), matter_type: "Commercial".into(), stage: "Archival".into(),
+        forum: setup_jurisdiction(),
+        matter_type: "Commercial".into(),
+        stage: "Archival".into(),
     })
 }
 
 fn setup_jurisdiction() -> Jurisdiction {
-    Jurisdiction { court: "Commercial Court".into(), region: "DE".into(), level: JurisdictionLevel::Trial }
+    Jurisdiction {
+        court: "Commercial Court".into(),
+        region: "DE".into(),
+        level: JurisdictionLevel::Trial,
+    }
 }
 
 fn setup_config() -> VerificationConfig {
-    VerificationConfig { support_threshold: "0.5".into(), allow_unknown_good_law: true, require_conflict_disclosure: false, valuation_config: valuation::ValuationConfig::default() }
+    VerificationConfig {
+        support_threshold: "0.5".into(),
+        allow_unknown_good_law: true,
+        require_conflict_disclosure: false,
+        target_jurisdiction: None,
+        verification_time: "2026-11-06T00:00:00Z".into(),
+        max_status_age_days: 365,
+        valuation_config: valuation::ValuationConfig::default(),
+    }
 }
 
 fn setup_strict_config() -> VerificationConfig {
-    VerificationConfig { support_threshold: "0.5".into(), allow_unknown_good_law: false, require_conflict_disclosure: true, valuation_config: valuation::ValuationConfig::default() }
+    VerificationConfig {
+        support_threshold: "0.5".into(),
+        allow_unknown_good_law: false,
+        require_conflict_disclosure: true,
+        target_jurisdiction: None,
+        verification_time: "2026-11-06T00:00:00Z".into(),
+        max_status_age_days: 365,
+        valuation_config: valuation::ValuationConfig::default(),
+    }
 }

@@ -1,9 +1,9 @@
 use cohbit_legal_gmi::*;
+use num_rational::BigRational;
+use num_traits::FromPrimitive;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use num_rational::BigRational;
-use num_traits::FromPrimitive;
 
 fn main() -> anyhow::Result<()> {
     let base_dir = Path::new("fixtures/demo_data");
@@ -17,10 +17,14 @@ fn main() -> anyhow::Result<()> {
     }
 
     let pm = PersistenceManager::new(base_dir)?;
-    
+
     // 1. Initialize
     let posture = ProceduralPosture {
-        forum: Jurisdiction { court: "Supreme Court".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
+        forum: Jurisdiction {
+            court: "Supreme Court".into(),
+            region: "US".into(),
+            level: JurisdictionLevel::Supreme,
+        },
         matter_type: "Civil".into(),
         stage: "Initial".into(),
     };
@@ -31,7 +35,11 @@ fn main() -> anyhow::Result<()> {
     let reference = LegalReference {
         id: ReferenceId("r1".into()),
         citation: "123 U.S. 456".into(),
-        jurisdiction: Jurisdiction { court: "Supreme".into(), region: "US".into(), level: JurisdictionLevel::Supreme },
+        jurisdiction: Jurisdiction {
+            court: "Supreme".into(),
+            region: "US".into(),
+            level: JurisdictionLevel::Supreme,
+        },
         source_text: Some("The right of the people to be secure...".into()),
         procedural_status: ProceduralStatus::GoodLaw,
         ..Default::default()
@@ -47,13 +55,13 @@ fn main() -> anyhow::Result<()> {
 
     // 3. Commit a claim
     let witness = LegalWitness {
-        proposed_claim: LegalClaim { 
-            id: ClaimId("c1".into()), 
-            text: "Privacy Right".into(), 
-            cited_reference: Some(ReferenceId("r1".into())), 
-            quoted_text: Some("secure".into()), 
-            authority_label: AuthorityLabel::Persuasive, 
-            inference: InferenceKind::DirectQuotation 
+        proposed_claim: LegalClaim {
+            id: ClaimId("c1".into()),
+            text: "Privacy Right".into(),
+            cited_reference: Some(ReferenceId("r1".into())),
+            quoted_text: Some("secure".into()),
+            authority_label: AuthorityLabel::Persuasive,
+            inference: InferenceKind::DirectQuotation,
         },
         cited_reference: Some(reference),
         support_score: Some("0.5".to_string()),
@@ -67,10 +75,21 @@ fn main() -> anyhow::Result<()> {
         support_threshold: "0.5".into(),
         allow_unknown_good_law: true,
         require_conflict_disclosure: false,
+        target_jurisdiction: None,
+        verification_time: "2026-11-06T00:00:00Z".into(),
+        max_status_age_days: 365,
         valuation_config: valuation::ValuationConfig::default(),
     };
 
-    let (_, cohbit) = cohbit::apply(manifold, witness, &config, BigRational::from_i64(0).unwrap(), BigRational::from_i64(0).unwrap(), Some(&adapter)).unwrap();
+    let (_, cohbit) = cohbit::apply(
+        manifold,
+        witness,
+        &config,
+        BigRational::from_i64(0).unwrap(),
+        BigRational::from_i64(0).unwrap(),
+        Some(&adapter),
+    )
+    .unwrap();
     pm.append_receipt(&cohbit.receipt)?;
 
     // 4. Anchor the Root (Mandatory for non-genesis bundles in Hardened Mode)
@@ -84,7 +103,7 @@ fn main() -> anyhow::Result<()> {
     bm.export_bundle(&pm, &adapters)?;
 
     println!("Demo bundle generated at: {:?}", bundle_dir);
-    
+
     // 5. Verify
     bm.verify_bundle()?;
     println!("Bundle verification: PASS");
