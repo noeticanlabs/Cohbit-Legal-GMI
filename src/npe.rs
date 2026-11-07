@@ -40,7 +40,7 @@ impl<H: LegalLlmHook> LegalNpe<H> {
             if self.memory.total_steps == 0 {
                 0.0
             } else {
-                self.memory.total_success as f64 / self.memory.total_steps as f64
+                self.memory.total_computational_accepts as f64 / self.memory.total_steps as f64
             },
             self.memory
                 .hallucination_traps

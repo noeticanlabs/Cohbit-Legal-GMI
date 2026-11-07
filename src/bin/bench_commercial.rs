@@ -12,7 +12,7 @@ use num_traits::FromPrimitive;
 use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
-    println!("CohBit Legal GMI: Commercial Accuracy & Detail Benchmark");
+    println!("CohBit Legal GMI: Synthetic Metadata and Guardrail Checks");
     println!("=====================================================");
 
     let mut total_tests = 0;
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("\n=====================================================");
     println!(
-        "OVERALL ACCURACY: {}/{} tests passed ({:.0}%)",
+        "FIXTURE CHECKS: {}/{} passed ({:.0}%; not a legal-accuracy metric)",
         passed_tests,
         total_tests,
         (passed_tests as f64 / total_tests as f64) * 100.0
@@ -93,7 +93,7 @@ fn test_quote_fidelity() -> anyhow::Result<bool> {
         },
         cited_reference: Some(reference),
         support_score: Some("1".to_string()),
-        review_status: Some(InternalReviewStatus::Certified),
+        review_status: Some(InternalReviewStatus::LegacyCertifiedLabel),
         ..Default::default()
     };
 

@@ -70,17 +70,13 @@ pub struct AdmissibilityGauntlet;
 
 impl AdmissibilityGauntlet {
     pub fn evaluate_verified(
-        witness: &LegalWitness,
-        config: &VerificationConfig,
-        adapter: &dyn LegalSourceAdapter,
+        _witness: &LegalWitness,
+        _config: &VerificationConfig,
+        _adapter: &dyn LegalSourceAdapter,
     ) -> Result<VerifierResult, crate::error::GmiError> {
-        if adapter.trust_level() != crate::adapter::AdapterTrust::Verified {
-            return Err(crate::error::GmiError::VerificationFailed(format!(
-                "Adapter {} is not trusted for verified admission",
-                adapter.name()
-            )));
-        }
-        Self::evaluate(witness, config, Some(adapter))
+        Err(crate::error::GmiError::VerificationFailed(
+            "Adapter verification is not legal proof; use apply_certified".into(),
+        ))
     }
 
     pub fn evaluate(
@@ -408,32 +404,10 @@ fn check_c3(
         }
     }
 
-    for link in &witness.evidence_links {
-        if link.source_id != trace.resolved_source_id
-            || link.passage_start >= link.passage_end
-            || link.claim_fragment.trim().is_empty()
-        {
-            continue;
-        }
-        if let EvidenceVerificationMethod::HumanReviewed { reviewer_id } = &link.verification_method
-        {
-            if !reviewer_id.trim().is_empty() && !link.verifier_version.trim().is_empty() {
-                return (
-                    CheckResult {
-                        passed: true,
-                        reason: format!("Claim support approved by human reviewer {}", reviewer_id),
-                    },
-                    vec![link.clone()],
-                    "1".into(),
-                );
-            }
-        }
-    }
-
     (
         CheckResult {
             passed: false,
-            reason: "Source exists, but claim-to-evidence support requires a valid exact-quotation or human-reviewed evidence link".into(),
+            reason: "Source exists, but claim-to-evidence support is not an exact quotation; certified interpretation requires apply_certified and authenticated review attestations".into(),
         },
         vec![],
         "0".into(),
@@ -634,7 +608,7 @@ fn check_c5(
     }
 }
 
-fn check_c6(witness: &LegalWitness, available_claims: &[crate::claim::LegalClaim]) -> CheckResult {
+fn check_c6(witness: &LegalWitness, _available_claims: &[crate::claim::LegalClaim]) -> CheckResult {
     match &witness.proposed_claim.inference {
         InferenceKind::DirectQuotation => {
             if witness.proposed_claim.quoted_text.is_some() {
@@ -649,44 +623,10 @@ fn check_c6(witness: &LegalWitness, available_claims: &[crate::claim::LegalClaim
                 }
             }
         }
-        InferenceKind::RuleApplication {
-            rule_claims,
-            fact_claims,
-        } => {
-            if rule_claims.is_empty() || fact_claims.is_empty() {
-                return CheckResult { passed: false, reason: "Rule application requires at least one verified rule premise and one verified fact premise".into() };
-            }
-            if rule_claims
-                .iter()
-                .chain(fact_claims)
-                .any(|id| id == &witness.proposed_claim.id)
-            {
-                return CheckResult {
-                    passed: false,
-                    reason: "Inference cannot reference itself as a premise".into(),
-                };
-            }
-            let missing: Vec<_> = rule_claims
-                .iter()
-                .chain(fact_claims)
-                .filter(|id| !available_claims.iter().any(|claim| &claim.id == *id))
-                .map(|id| id.0.clone())
-                .collect();
-            if missing.is_empty() {
-                CheckResult {
-                    passed: true,
-                    reason: "Every rule-application premise is already committed".into(),
-                }
-            } else {
-                CheckResult {
-                    passed: false,
-                    reason: format!(
-                        "Inference references unavailable premises: {}",
-                        missing.join(", ")
-                    ),
-                }
-            }
-        }
+        InferenceKind::RuleApplication { .. } => CheckResult {
+            passed: false,
+            reason: "Rule-application IDs are not a derivation; use apply_certified with a Lean-checked proof".into(),
+        },
         InferenceKind::UnsupportedHypothesis => CheckResult {
             passed: false,
             reason: "Unsupported hypothesis cannot cross the commitment membrane".into(),
@@ -736,11 +676,8 @@ fn check_c7(witness: &LegalWitness, config: &VerificationConfig) -> CheckResult 
             };
         }
         CheckResult {
-            passed: true,
-            reason: format!(
-                "Adverse-authority search recorded with {} disclosed result(s)",
-                search.result_citations.len()
-            ),
+            passed: false,
+            reason: "Witness-supplied search metadata is unauthenticated; certified coverage requires a signed proof context".into(),
         }
     } else {
         CheckResult {

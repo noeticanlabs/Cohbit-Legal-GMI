@@ -21,6 +21,15 @@ jobs:
       with:
         toolchain: 1.99.1
         components: rustfmt, clippy
+
+    - name: Install pinned Lean toolchain
+      run: |
+        curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+        echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+    - name: Build independent proof checker
+      working-directory: lean
+      run: lake build legal_proof_check
         
     - name: Build
       run: cargo build --all-targets --locked --verbose

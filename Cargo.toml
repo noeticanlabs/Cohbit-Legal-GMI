@@ -43,7 +43,7 @@ name = "bench-convergence"
 path = "src/bin/bench_convergence.rs"
 
 [[bin]]
-name = "prod-bench"
+name = "simulation-bench"
 path = "src/bin/prod_bench.rs"
 
 [[bin]]

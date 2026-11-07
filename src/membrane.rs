@@ -7,7 +7,7 @@ use crate::verifier::VerificationDecision;
 
 #[derive(Debug)]
 pub enum CommitOutcome {
-    Accepted(LegalCohBit),
+    SimulationAccepted(LegalCohBit),
     Rejected {
         cohbit: LegalCohBit,
         reasons: Vec<String>,
@@ -69,7 +69,7 @@ impl CommitmentMembrane {
                     let reasons = failure_reasons(&cohbit);
                     match cohbit.receipt.decision {
                         VerificationDecision::Accept => {
-                            results.push(CommitOutcome::Accepted(cohbit))
+                            results.push(CommitOutcome::SimulationAccepted(cohbit))
                         }
                         VerificationDecision::Reject => {
                             results.push(CommitOutcome::Rejected { cohbit, reasons })

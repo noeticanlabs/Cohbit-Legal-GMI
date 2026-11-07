@@ -20,6 +20,10 @@ pub struct TransitionTrace {
     pub adapter_trace: Option<crate::adapter::AdapterTrace>,
     pub witness: crate::witness::LegalWitness,
     pub verifier_result: crate::verifier::VerifierResult,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legal_proof: Option<crate::proof::ProofArtifact>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proof_status: Option<crate::proof::ProofStatus>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +58,10 @@ struct ReceiptCommitmentView<'a> {
     defect: &'a str,
     witness: &'a crate::witness::LegalWitness,
     verifier_result: &'a crate::verifier::VerifierResult,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    legal_proof: &'a Option<crate::proof::ProofArtifact>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    proof_status: &'a Option<crate::proof::ProofStatus>,
 }
 
 pub fn canonical_receipt_hash(trace: &TransitionTrace) -> ReceiptHash {
@@ -72,6 +80,8 @@ pub fn canonical_receipt_hash(trace: &TransitionTrace) -> ReceiptHash {
         defect: &trace.defect,
         witness: &trace.witness,
         verifier_result: &trace.verifier_result,
+        legal_proof: &trace.legal_proof,
+        proof_status: &trace.proof_status,
     }))
 }
 

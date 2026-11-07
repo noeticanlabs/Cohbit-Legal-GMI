@@ -8,7 +8,7 @@ use num_traits::FromPrimitive;
 
 #[derive(Parser)]
 #[command(name = "cohbit-legal-gmi")]
-#[command(about = "Verifier-certified legal reasoning crate")]
+#[command(about = "Research CLI for computational simulation receipts")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -21,12 +21,12 @@ enum Commands {
         #[arg(long)]
         claim: String,
     },
-    /// Verify a legal witness without committing
+    /// Run the legacy simulation verifier without committing
     Verify {
         #[arg(long)]
         witness: String,
     },
-    /// Commit a verified witness to the persistent log
+    /// Commit a simulation result to the persistent log (not legal certification)
     Commit {
         #[arg(long)]
         witness: String,
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
             let result = cohbit_legal_gmi::verifier::AdmissibilityGauntlet::evaluate(
                 &witness, &config, None,
             )?;
-            println!("--- Verification Result ---");
+            println!("--- Simulation Result (not a legal-proof status) ---");
             println!("Decision: {:?}", result.decision);
             println!("Valuation Delta: {}", result.valuation_delta);
         }
@@ -118,7 +118,7 @@ fn main() -> Result<()> {
             match cohbit.receipt.decision {
                 cohbit_legal_gmi::verifier::VerificationDecision::Accept => {
                     println!(
-                        "Commit accepted. Step Index: {}",
+                        "Simulation transition accepted. Step Index: {}",
                         manifest.latest_step_index
                     )
                 }

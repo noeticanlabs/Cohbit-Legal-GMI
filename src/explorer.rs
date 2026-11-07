@@ -7,7 +7,8 @@ use std::collections::VecDeque;
 pub struct ExplorationSpace {
     pub active_proposals: Vec<LegalProposal>,
     pub candidate_queue: VecDeque<CandidateClaim>,
-    pub accepted_claims_ids: Vec<String>,
+    #[serde(alias = "accepted_claims_ids")]
+    pub computational_accept_claim_ids: Vec<String>,
     pub rejected_claims_ids: Vec<String>,
     #[serde(default)]
     pub escalated_claims_ids: Vec<String>,
@@ -18,7 +19,7 @@ impl ExplorationSpace {
         Self {
             active_proposals: vec![],
             candidate_queue: VecDeque::new(),
-            accepted_claims_ids: vec![],
+            computational_accept_claim_ids: vec![],
             rejected_claims_ids: vec![],
             escalated_claims_ids: vec![],
         }
@@ -37,7 +38,7 @@ impl ExplorationSpace {
 
     pub fn record_decision(&mut self, text: &str, accepted: bool) {
         if accepted {
-            self.accepted_claims_ids.push(text.to_string());
+            self.computational_accept_claim_ids.push(text.to_string());
         } else {
             self.rejected_claims_ids.push(text.to_string());
         }
@@ -45,7 +46,9 @@ impl ExplorationSpace {
 
     pub fn record_outcome(&mut self, text: &str, decision: &VerificationDecision) {
         match decision {
-            VerificationDecision::Accept => self.accepted_claims_ids.push(text.to_string()),
+            VerificationDecision::Accept => {
+                self.computational_accept_claim_ids.push(text.to_string())
+            }
             VerificationDecision::Reject => self.rejected_claims_ids.push(text.to_string()),
             VerificationDecision::Escalate => self.escalated_claims_ids.push(text.to_string()),
         }

@@ -35,7 +35,7 @@ pub struct LegalNpeMemory {
 
     /// MACRO: System-wide metrics
     pub total_steps: u64,
-    pub total_success: u64,
+    pub total_computational_accepts: u64,
     pub total_rejections: u64,
 
     /// Metrics for "Multi-view Rate" and "Quick to Correct Ratio"
@@ -51,7 +51,7 @@ impl LegalNpeMemory {
             citation_history: HashMap::new(),
             hallucination_traps: HashMap::new(),
             total_steps: 0,
-            total_success: 0,
+            total_computational_accepts: 0,
             total_rejections: 0,
             total_explorations: 0,
             total_rejection_latency: 0,
@@ -76,7 +76,7 @@ impl LegalNpeMemory {
         self.total_steps += 1;
 
         if receipt.decision == VerificationDecision::Accept {
-            self.total_success += 1;
+            self.total_computational_accepts += 1;
         } else if receipt.decision == VerificationDecision::Reject {
             self.total_rejections += 1;
             // Latency is derived from the step index relative to the start of an exploration

@@ -27,4 +27,4 @@ cargo test --all-targets --locked --offline
 cd lean && lake build
 ```
 
-The latest recorded local run passed all gates. Rust currently has 25 unit/regression tests. This is local engineering evidence, not external legal or production qualification.
+The latest recorded local run passed all gates. Rust currently has 29 unit/regression tests. This is local engineering evidence, not external legal or production qualification.

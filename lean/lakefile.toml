@@ -1,6 +1,6 @@
 name = "lean_kernel"
 version = "0.1.0"
-defaultTargets = ["lean_kernel"]
+defaultTargets = ["lean_kernel", "legal_proof_check"]
 
 [[lean_lib]]
 name = "LeanKernel"
@@ -8,3 +8,7 @@ name = "LeanKernel"
 [[lean_exe]]
 name = "lean_kernel"
 root = "Main"
+
+[[lean_exe]]
+name = "legal_proof_check"
+root = "ProofCheck"

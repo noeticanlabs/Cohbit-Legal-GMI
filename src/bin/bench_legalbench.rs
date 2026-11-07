@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
     let mut accepted = 0;
     let mut rejected = 0;
 
-    println!("Starting LegalBench GMI Benchmark...");
+    println!("Starting synthetic Legacy Verifier fixture run (not legal accuracy)...");
     println!("--------------------------------------");
 
     for line in reader.lines() {
@@ -167,7 +167,7 @@ fn main() -> anyhow::Result<()> {
     println!("Accepted:      {}", accepted);
     println!("Rejected:      {}", rejected);
     println!(
-        "Success Rate:  {:.2}%",
+        "Simulation accept fraction: {:.2}% (no legal-accuracy implication)",
         (accepted as f64 / total as f64) * 100.0
     );
 

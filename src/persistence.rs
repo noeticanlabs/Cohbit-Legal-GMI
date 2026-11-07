@@ -36,6 +36,16 @@ pub struct ChainManifest {
     pub root_commitment: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProofLifecycleRecord {
+    pub step_index: u64,
+    pub receipt_hash: String,
+    pub claim_id: String,
+    pub dependencies: std::collections::BTreeMap<String, String>,
+    pub original_status: crate::proof::ProofStatus,
+    pub current_status: crate::proof::ProofStatus,
+}
+
 pub struct PersistenceManager {
     pub base_dir: PathBuf,
 }
@@ -57,6 +67,64 @@ pub enum FailurePoint {
 }
 
 impl PersistenceManager {
+    /// Recompute current proof usability without changing immutable receipts.
+    /// Revocations, changed dependency hashes and expiry yield ReevaluationRequired.
+    pub fn assess_proof_lifecycle(
+        &self,
+        policy: &crate::proof::TrustPolicy,
+        now: &str,
+    ) -> Result<Vec<ProofLifecycleRecord>> {
+        let path = self.base_dir.join("traces.ndjson");
+        if !path.exists() {
+            return Ok(vec![]);
+        }
+        let mut records = Vec::new();
+        for line in BufReader::new(File::open(path)?).lines() {
+            let trace: TransitionTrace = serde_json::from_str(&line?)?;
+            let (Some(artifact), Some(original_status)) = (trace.legal_proof, trace.proof_status)
+            else {
+                continue;
+            };
+            let current_status = match artifact.check(policy, now) {
+                Ok(checked) => checked.status().clone(),
+                Err(_) => match artifact.usability(policy, now) {
+                    crate::proof::ProofStatus::Qualified => crate::proof::ProofStatus::Rejected,
+                    status => status,
+                },
+            };
+            records.push(ProofLifecycleRecord {
+                step_index: trace.step_index,
+                receipt_hash: trace.receipt_hash.0,
+                claim_id: artifact.context.claim_id,
+                dependencies: artifact.context.dependencies,
+                original_status,
+                current_status,
+            });
+        }
+        Ok(records)
+    }
+
+    /// Persist a replaceable current-status index. Historical receipts remain
+    /// append-only; this index is always reproducible from them and trust state.
+    pub fn refresh_proof_lifecycle(
+        &self,
+        policy: &crate::proof::TrustPolicy,
+        now: &str,
+    ) -> Result<Vec<ProofLifecycleRecord>> {
+        let records = self.assess_proof_lifecycle(policy, now)?;
+        let path = self.base_dir.join("proof-lifecycle.json");
+        let temporary = self.base_dir.join("proof-lifecycle.json.tmp");
+        let mut file = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(&temporary)?;
+        file.write_all(serde_json::to_vec_pretty(&records)?.as_slice())?;
+        file.sync_all()?;
+        fs::rename(temporary, path)?;
+        Ok(records)
+    }
+
     pub fn new(base_dir: impl AsRef<Path>) -> Result<Self> {
         let path = base_dir.as_ref().to_path_buf();
         if !path.exists() {

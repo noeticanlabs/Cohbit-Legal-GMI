@@ -8,8 +8,8 @@ Ensure you have Rust installed.
 cargo build
 ```
 
-## 1. Valid Claim Commitment
-A claim with a valid quote and good law passes the admissibility gauntlet.
+## 1. Simulation Claim Commitment
+An exact quote can pass the legacy computational gauntlet. This is not legal certification.
 - **Action**: Run `cargo test test_llm_proposal_to_commitment_flow`.
 - **Outcome**: `Accept`. A `LegalReceipt` is generated.
 
@@ -39,5 +39,5 @@ If the source text inside an exported bundle is modified, the bundle becomes inv
 You can generate a sample trajectory and verify it using the audit binary:
 ```powershell
 # Replays the traces and checks formal stability/mutation laws
-cargo run --bin audit_trace path/to/sample/traces.ndjson
+cargo run --bin coh-audit -- --trace-log path/to/sample/traces.ndjson
 ```

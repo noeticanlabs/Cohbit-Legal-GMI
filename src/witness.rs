@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum EvidenceVerificationMethod {
     ExactQuotation,
-    HumanReviewed { reviewer_id: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -30,7 +29,7 @@ pub struct AdverseAuthoritySearch {
 pub enum InternalReviewStatus {
     Draft,
     PeerReviewed,
-    Certified,
+    LegacyCertifiedLabel,
     AdversarialAudit,
 }
 
