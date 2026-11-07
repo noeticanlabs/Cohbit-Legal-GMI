@@ -85,6 +85,13 @@ impl BundleManager {
         if state_path.exists() {
             fs::copy(&state_path, self.bundle_dir.join("state.json"))?;
         }
+        let lifecycle_path = pm.base_dir.join("proof-lifecycle.json");
+        if lifecycle_path.exists() {
+            fs::copy(
+                &lifecycle_path,
+                self.bundle_dir.join("proof-lifecycle.json"),
+            )?;
+        }
 
         // 2. Extract and Bind Sources
         let mut source_entries = Vec::new();
@@ -350,6 +357,56 @@ impl BundleManager {
         pm.verify_integrity()?;
 
         Ok(())
+    }
+
+    /// Recheck every bundled certified proof using trust roots supplied by the
+    /// verifier. Trust roots are intentionally not loaded from the bundle.
+    pub fn verify_certified_bundle(
+        &self,
+        policy: &crate::proof::TrustPolicy,
+        now: &str,
+    ) -> Result<Vec<crate::proof::ProofStatus>> {
+        self.verify_bundle()?;
+        let path = self.bundle_dir.join("traces.ndjson");
+        let file = File::open(path).context("Certified bundle has no traces")?;
+        let mut statuses = Vec::new();
+        let mut current = std::collections::BTreeMap::new();
+        for line in BufReader::new(file).lines() {
+            let trace: crate::receipt::TransitionTrace = serde_json::from_str(&line?)?;
+            if trace.policy_version == crate::proof::PROOF_POLICY {
+                let artifact = trace
+                    .legal_proof
+                    .ok_or_else(|| anyhow!("Certified trace has no proof artifact"))?;
+                let original = trace
+                    .proof_status
+                    .ok_or_else(|| anyhow!("Certified trace has no proof status"))?;
+                let checked = artifact.check(policy, now)?;
+                if original != *checked.status() {
+                    return Err(anyhow!(
+                        "Bundled proof status does not match fresh verification"
+                    ));
+                }
+                current.insert(artifact.context.claim_id.clone(), checked.status().clone());
+                statuses.push(checked.status().clone());
+            }
+        }
+        if statuses.is_empty() {
+            return Err(anyhow!("Bundle contains no certified proof traces"));
+        }
+        let lifecycle: Vec<crate::persistence::ProofLifecycleRecord> = serde_json::from_str(
+            &fs::read_to_string(self.bundle_dir.join("proof-lifecycle.json"))
+                .context("Certified bundle has no lifecycle index")?,
+        )?;
+        let indexed: std::collections::BTreeMap<_, _> = lifecycle
+            .into_iter()
+            .map(|record| (record.claim_id, record.current_status))
+            .collect();
+        if current != indexed {
+            return Err(anyhow!(
+                "Bundled lifecycle index does not match fresh proof verification"
+            ));
+        }
+        Ok(statuses)
     }
 }
 

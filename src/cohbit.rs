@@ -1,4 +1,4 @@
-use crate::adapter::{AdapterTrust, LegalSourceAdapter};
+use crate::adapter::LegalSourceAdapter;
 use crate::error::GmiError;
 use crate::manifold::LegalManifold;
 use crate::receipt::{canonical_receipt_hash, LegalReceipt, TransitionTrace};
@@ -13,15 +13,32 @@ pub fn is_stable(delta_v: &BigRational, spend: &BigRational, defect: &BigRationa
     delta_v >= &(spend - defect)
 }
 
-/// Apply a legal transition (witnessed claim) to the manifold
+/// Computational/simulation admission only. Accept is not legal certification.
 pub fn apply(
-    mut manifold: LegalManifold,
+    manifold: LegalManifold,
     witness: LegalWitness,
     config: &VerificationConfig,
     spend: BigRational,
     defect: BigRational,
     adapter: Option<&dyn LegalSourceAdapter>,
 ) -> Result<(LegalManifold, LegalCohBit), GmiError> {
+    apply_inner(manifold, witness, config, spend, defect, adapter, None)
+}
+
+fn apply_inner(
+    mut manifold: LegalManifold,
+    witness: LegalWitness,
+    config: &VerificationConfig,
+    spend: BigRational,
+    defect: BigRational,
+    adapter: Option<&dyn LegalSourceAdapter>,
+    proof: Option<crate::proof::CheckedProof>,
+) -> Result<(LegalManifold, LegalCohBit), GmiError> {
+    let policy_version = if proof.is_some() {
+        crate::proof::PROOF_POLICY
+    } else {
+        "admission-v2"
+    };
     if manifold
         .claims
         .iter()
@@ -42,12 +59,34 @@ pub fn apply(
     if effective_config.target_jurisdiction.is_none() {
         effective_config.target_jurisdiction = Some(manifold.procedural_posture.forum.clone());
     }
-    let mut result = AdmissibilityGauntlet::evaluate_with_claims(
-        &witness,
-        &effective_config,
-        adapter,
-        &manifold.claims,
-    )?;
+    let mut result = if proof.is_some() {
+        let checked = crate::verifier::CheckResult {
+            passed: true,
+            reason: "Authenticated scoped context and independent Lean derivation; see proof_status and legal_proof".into(),
+        };
+        crate::verifier::VerifierResult {
+            c1_citation_exists: checked.clone(),
+            c2_citation_binding: checked.clone(),
+            c3_claim_source_alignment: checked.clone(),
+            c4_jurisdictional_validity: checked.clone(),
+            c5_procedural_status: checked.clone(),
+            c6_inference_validity: checked.clone(),
+            c7_conflict_disclosure: checked,
+            adapter_trace: None,
+            decision: VerificationDecision::Accept,
+            valuation_delta: "0".into(),
+            defect_reserve: "0".into(),
+            evidence_support: "1".into(),
+            verified_evidence_links: vec![],
+        }
+    } else {
+        AdmissibilityGauntlet::evaluate_with_claims(
+            &witness,
+            &effective_config,
+            adapter,
+            &manifold.claims,
+        )?
+    };
 
     let pre_state_hash = manifold.get_state_hash();
     let last_receipt_hash = manifold.last_receipt_hash.clone();
@@ -74,6 +113,13 @@ pub fn apply(
     {
         // Atomic state transition
         manifold.claims.push(witness.proposed_claim.clone());
+        manifold.claim_proof_status_at_admission.insert(
+            witness.proposed_claim.id.clone(),
+            proof
+                .as_ref()
+                .map(|p| p.status().clone())
+                .unwrap_or(crate::proof::ProofStatus::Unknown),
+        );
 
         // Coherence gain reduces the valuation (uncertainty)
         let val_next = current_valuation - delta_v;
@@ -91,7 +137,7 @@ pub fn apply(
 
         let mut trace = TransitionTrace {
             schema_version: "2.0.0".into(),
-            policy_version: "admission-v2".into(),
+            policy_version: policy_version.into(),
             step_index: manifold.step_index,
             decision: result.decision.clone(),
             pre_state_hash: pre_state_hash.clone(),
@@ -106,6 +152,8 @@ pub fn apply(
             adapter_trace: result.adapter_trace.clone(),
             witness: witness.clone(),
             verifier_result: result.clone(),
+            legal_proof: proof.as_ref().map(|p| p.artifact().clone()),
+            proof_status: proof.as_ref().map(|p| p.status().clone()),
         };
         let receipt_hash = canonical_receipt_hash(&trace);
         trace.receipt_hash = receipt_hash.clone();
@@ -113,7 +161,7 @@ pub fn apply(
 
         let receipt = LegalReceipt {
             schema_version: "2.0.0".into(),
-            policy_version: "admission-v2".into(),
+            policy_version: policy_version.into(),
             receipt_hash,
             pre_state_hash,
             post_state_hash,
@@ -145,7 +193,7 @@ pub fn apply(
 
         let mut trace = TransitionTrace {
             schema_version: "2.0.0".into(),
-            policy_version: "admission-v2".into(),
+            policy_version: policy_version.into(),
             step_index: manifold.step_index,
             decision: result.decision.clone(),
             pre_state_hash: pre_state_hash.clone(),
@@ -160,6 +208,8 @@ pub fn apply(
             adapter_trace: result.adapter_trace.clone(),
             witness: witness.clone(),
             verifier_result: result.clone(),
+            legal_proof: proof.as_ref().map(|p| p.artifact().clone()),
+            proof_status: proof.as_ref().map(|p| p.status().clone()),
         };
         let receipt_hash = canonical_receipt_hash(&trace);
         trace.receipt_hash = receipt_hash.clone();
@@ -167,7 +217,7 @@ pub fn apply(
 
         let receipt = LegalReceipt {
             schema_version: "2.0.0".into(),
-            policy_version: "admission-v2".into(),
+            policy_version: policy_version.into(),
             receipt_hash,
             pre_state_hash: pre_state_hash.clone(),
             post_state_hash,
@@ -187,30 +237,63 @@ pub fn apply(
     }
 }
 
-/// Production admission entry point. Its type requires an independent source
-/// adapter; callers that cannot supply one cannot accidentally request a
-/// verified commitment.
+/// Legacy API fails closed: an adapter trust label is not a legal proof.
 pub fn apply_verified(
+    _manifold: LegalManifold,
+    _witness: LegalWitness,
+    _config: &VerificationConfig,
+    _spend: BigRational,
+    _defect: BigRational,
+    _adapter: &dyn LegalSourceAdapter,
+) -> Result<(LegalManifold, LegalCohBit), GmiError> {
+    Err(GmiError::VerificationFailed(
+        "Use apply_certified with an independently checked proof certificate".into(),
+    ))
+}
+
+pub struct CertifiedAdmission<'a> {
+    pub artifact: &'a crate::proof::ProofArtifact,
+    pub policy: &'a crate::proof::TrustPolicy,
+}
+
+/// The only certified admission path. Proof input and trust roots are separate.
+pub fn apply_certified(
     manifold: LegalManifold,
     witness: LegalWitness,
     config: &VerificationConfig,
     spend: BigRational,
     defect: BigRational,
-    adapter: &dyn LegalSourceAdapter,
+    admission: CertifiedAdmission<'_>,
 ) -> Result<(LegalManifold, LegalCohBit), GmiError> {
-    if adapter.trust_level() != AdapterTrust::Verified {
-        return Err(GmiError::VerificationFailed(format!(
-            "Adapter {} is {:?}; verified admission requires a Verified adapter",
-            adapter.name(),
-            adapter.trust_level()
-        )));
-    }
-    if config.allow_unknown_good_law || !config.require_conflict_disclosure {
+    let c = &admission.artifact.context;
+    if c.state_hash != manifold.get_state_hash().0
+        || c.posture_hash != crate::receipt::stable_hash(&manifold.procedural_posture)
+        || c.claim_id != witness.proposed_claim.id.0
+        || c.claim_text != witness.proposed_claim.text
+        || c.claim_hash != crate::receipt::stable_hash(&witness.proposed_claim)
+        || c.verification_time != config.verification_time
+        || config.target_jurisdiction.as_ref().is_none_or(|j| {
+            crate::receipt::stable_hash(j)
+                != crate::receipt::stable_hash(&manifold.procedural_posture.forum)
+        })
+    {
         return Err(GmiError::VerificationFailed(
-            "Verified admission requires unknown authority to fail closed and adverse-authority disclosure to be enabled".into(),
+            "Proof is bound to a different claim, state, time or forum".into(),
         ));
     }
-    apply(manifold, witness, config, spend, defect, Some(adapter))
+    let checked = admission
+        .artifact
+        .check(admission.policy, &config.verification_time)
+        .map_err(|e| GmiError::VerificationFailed(e.to_string()))?;
+    apply_inner(
+        manifold,
+        witness,
+        config,
+        spend,
+        defect,
+        None,
+        Some(checked),
+    )
 }
 
 #[derive(Debug)]

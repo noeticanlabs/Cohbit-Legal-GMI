@@ -4,15 +4,15 @@ authors:
 - family-names: "Ellington"
   given-names: "Michael"
   affiliation: "NoeticanLabs"
-title: "CohBit Legal GMI: Hardened Portable Legal Evidence Vault"
-version: 1.0.0-hardened
+title: "CohBit Legal GMI: Research Prototype for Conditional Legal Proofs"
+version: 0.1.0-research
 date-released: 2026-05-09
 url: "https://github.com/noeticanlabs/Cohbit-Legal-GMI"
 keywords:
   - legal-tech
-  - certified-computation
+  - conditional-proof
   - evidence-vault
   - rust
   - lean4
 abstract: >-
-  A verifier-gated legal evidence vault that separates exploratory legal generation from committed legal state. Every recorded transition is source-bound, state-bound, energy-accounted, receipt-certified, machine-auditable, externally anchored, and exportable as a portable evidence bundle.
+  A Rust and Lean research prototype for integrity-bound transition receipts and conditionally sound derivations in a fictional public-comment deadline domain. Independent legal-domain qualification remains pending.

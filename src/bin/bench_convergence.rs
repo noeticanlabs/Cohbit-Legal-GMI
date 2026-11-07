@@ -139,7 +139,10 @@ fn main() -> anyhow::Result<()> {
 
     println!("-----------------------------------------");
     println!("Total Steps (Decisions):  {}", memory.total_steps);
-    println!("Total Successes:          {}", memory.total_success);
+    println!(
+        "Computational Accepts:    {}",
+        memory.total_computational_accepts
+    );
     println!("Total Rejections:         {}", memory.total_rejections);
     println!();
     println!(

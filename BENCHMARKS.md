@@ -4,7 +4,7 @@ This repository does not currently support a production-grade, certified, or uni
 
 ## Locally tested gates
 
-The remediation suite covers generated trust defaults, missing sources, quotation mismatch, unrelated claims, status treatment and staleness, jurisdiction, inference premises, adverse-authority search provenance, malformed numbers, canonical receipts, interrupted-write recovery, restart continuity, bundle tampering, and external-key signatures.
+The remediation suite covers generated trust defaults, missing sources, quotation mismatch, unrelated claims, status treatment and staleness, scoped applicability, authenticated review roles, Lean derivations, missing/circular premises, resolved defeaters and priority, dependency revocation, malformed numbers, canonical receipts, interrupted-write recovery, restart continuity, bundle tampering, and external-key signatures.
 
 Passing these tests means only that the checked fixtures behaved as specified under the recorded toolchain. It does not establish live-law accuracy or a real-world false-accept rate.
 

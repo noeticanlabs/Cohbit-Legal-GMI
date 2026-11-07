@@ -54,6 +54,7 @@ pub mod memory;
 pub mod npe;
 pub mod persistence;
 pub mod privacy;
+pub mod proof;
 pub mod proposal;
 pub mod receipt;
 pub mod reference;

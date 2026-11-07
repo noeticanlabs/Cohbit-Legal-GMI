@@ -322,7 +322,7 @@ fn test_npe_memory_learning_loop() {
     );
 
     for res in results {
-        if let CommitOutcome::Accepted(cohbit) = res {
+        if let CommitOutcome::SimulationAccepted(cohbit) = res {
             npe.learn(&cohbit.receipt);
         }
     }
@@ -386,7 +386,7 @@ fn test_llm_proposal_to_commitment_flow() {
         Some(&adapter),
     );
 
-    assert!(matches!(results[0], CommitOutcome::Accepted(_)));
+    assert!(matches!(results[0], CommitOutcome::SimulationAccepted(_)));
 }
 
 #[test]
@@ -845,7 +845,7 @@ fn generated_candidate_without_adapter_escalates_and_never_commits() {
 
     assert!(matches!(outcomes[0], CommitOutcome::Escalated { .. }));
     assert!(manifold.claims.is_empty());
-    assert!(explorer.accepted_claims_ids.is_empty());
+    assert!(explorer.computational_accept_claim_ids.is_empty());
     assert_eq!(explorer.escalated_claims_ids.len(), 1);
 }
 
@@ -879,7 +879,7 @@ fn real_source_with_unrelated_claim_does_not_commit() {
 }
 
 #[test]
-fn human_reviewed_evidence_link_can_support_a_nonquotation_claim() {
+fn nonquotation_requires_an_authenticated_certified_context() {
     let (reference, adapter) = verified_test_fixture();
     let witness = LegalWitness {
         proposed_claim: LegalClaim {
@@ -892,16 +892,7 @@ fn human_reviewed_evidence_link_can_support_a_nonquotation_claim() {
         },
         cited_reference: Some(reference.clone()),
         support_score: None,
-        evidence_links: vec![ClaimEvidenceLink {
-            source_id: reference.id,
-            passage_start: 0,
-            passage_end: 7,
-            claim_fragment: "Content".into(),
-            verification_method: EvidenceVerificationMethod::HumanReviewed {
-                reviewer_id: "reviewer-1".into(),
-            },
-            verifier_version: "human-review-policy-v1".into(),
-        }],
+        evidence_links: vec![],
         ..Default::default()
     };
     let (manifold, cohbit) = apply(
@@ -913,9 +904,9 @@ fn human_reviewed_evidence_link_can_support_a_nonquotation_claim() {
         Some(&adapter),
     )
     .unwrap();
-    assert_eq!(cohbit.receipt.decision, VerificationDecision::Accept);
-    assert_eq!(manifold.claims.len(), 1);
-    assert_eq!(cohbit.verifier_result.verified_evidence_links.len(), 1);
+    assert_ne!(cohbit.receipt.decision, VerificationDecision::Accept);
+    assert!(manifold.claims.is_empty());
+    assert!(cohbit.verifier_result.verified_evidence_links.is_empty());
 }
 
 #[test]
@@ -1096,7 +1087,7 @@ fn stale_authority_status_escalates_without_committing() {
 }
 
 #[test]
-fn rule_application_requires_committed_non_circular_premises() {
+fn rule_application_ids_never_replace_a_machine_checked_derivation() {
     let (reference, adapter) = verified_test_fixture();
     let config = setup_config();
     let (state, _) = apply(
@@ -1118,16 +1109,6 @@ fn rule_application_requires_committed_non_circular_premises() {
     )
     .unwrap();
 
-    let reviewed_link = ClaimEvidenceLink {
-        source_id: reference.id.clone(),
-        passage_start: 0,
-        passage_end: 7,
-        claim_fragment: "Content".into(),
-        verification_method: EvidenceVerificationMethod::HumanReviewed {
-            reviewer_id: "reviewer-1".into(),
-        },
-        verifier_version: "human-review-policy-v1".into(),
-    };
     let supported = LegalWitness {
         proposed_claim: LegalClaim {
             id: ClaimId("supported-application".into()),
@@ -1141,7 +1122,7 @@ fn rule_application_requires_committed_non_circular_premises() {
             },
         },
         cited_reference: Some(reference.clone()),
-        evidence_links: vec![reviewed_link.clone()],
+        evidence_links: vec![],
         ..Default::default()
     };
     let (state, accepted) = apply(
@@ -1153,8 +1134,8 @@ fn rule_application_requires_committed_non_circular_premises() {
         Some(&adapter),
     )
     .unwrap();
-    assert_eq!(accepted.receipt.decision, VerificationDecision::Accept);
-    assert_eq!(state.claims.len(), 3);
+    assert_ne!(accepted.receipt.decision, VerificationDecision::Accept);
+    assert_eq!(state.claims.len(), 2);
 
     let circular = LegalWitness {
         proposed_claim: LegalClaim {
@@ -1169,7 +1150,7 @@ fn rule_application_requires_committed_non_circular_premises() {
             },
         },
         cited_reference: Some(reference),
-        evidence_links: vec![reviewed_link],
+        evidence_links: vec![],
         ..Default::default()
     };
     let (state_after, rejected) = apply(
@@ -1186,7 +1167,7 @@ fn rule_application_requires_committed_non_circular_premises() {
 }
 
 #[test]
-fn adverse_authority_search_provenance_is_required_when_enabled() {
+fn witness_supplied_adverse_search_never_authenticates_coverage() {
     let (reference, adapter) = verified_test_fixture();
     let mut config = setup_config();
     config.require_conflict_disclosure = true;
@@ -1218,12 +1199,12 @@ fn adverse_authority_search_provenance_is_required_when_enabled() {
         Some(&adapter),
     )
     .unwrap();
-    assert_eq!(accepted.receipt.decision, VerificationDecision::Accept);
-    assert_eq!(state.claims.len(), 1);
+    assert_ne!(accepted.receipt.decision, VerificationDecision::Accept);
+    assert!(state.claims.is_empty());
 }
 
 #[test]
-fn signed_authoritative_corpus_enables_verified_admission() {
+fn signed_corpus_proves_integrity_but_not_legal_authority() {
     let signing_key = ed25519_dalek::SigningKey::from_bytes(&[11_u8; 32]);
     let reference = LegalReference {
         id: ReferenceId("official-r1".into()),
@@ -1276,7 +1257,8 @@ fn signed_authoritative_corpus_enables_verified_admission() {
         method: "signed-corpus-exhaustive".into(),
         result_citations: vec![],
     });
-    let (state, cohbit) = apply_verified(
+    assert_eq!(adapter.trust_level(), AdapterTrust::LocalUnverified);
+    assert!(apply_verified(
         setup_manifold(),
         witness,
         &config,
@@ -1284,9 +1266,7 @@ fn signed_authoritative_corpus_enables_verified_admission() {
         BigRational::from_i64(0).unwrap(),
         &adapter,
     )
-    .unwrap();
-    assert_eq!(cohbit.receipt.decision, VerificationDecision::Accept);
-    assert_eq!(state.claims.len(), 1);
+    .is_err());
 
     let mut tampered = records;
     tampered
@@ -1381,8 +1361,8 @@ fn civic_output_separates_uncertainty_and_requires_human_submission_approval() {
         vec![reviewed, unresolved],
         vec!["Inspect the source-linked notice".into()],
     );
-    assert_eq!(response.supported_claims.len(), 1);
-    assert_eq!(response.unresolved_claims.len(), 1);
+    assert!(response.supported_claims.is_empty());
+    assert_eq!(response.unresolved_claims.len(), 2);
     assert!(!response.external_submission_authorized);
     assert!(response
         .authorize_external_submission("reviewer-1", "yes")

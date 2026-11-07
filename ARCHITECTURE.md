@@ -5,7 +5,7 @@ This document describes the structural design of the CohBit Legal GMI kernel, em
 ## 1. The Legal Manifold
 The `LegalManifold` is the primary state container. It represents a specific legal trajectory through a high-dimensional knowledge space.
 
-- **Claims**: A sequence of verified legal claims.
+- **Claims**: A sequence of computationally admitted claims. Legal-proof status is carried separately in certified receipts.
 - **Valuation**: A scalar (represented as `BigRational`) representing the "energy" or "certainty" of the manifold.
 - **Step Index**: A monotonically increasing counter for transitions (both Accept and Reject).
 - **Hash State**: A recursive hash of all prior claims and state, ensuring history cannot be rewritten.
@@ -19,8 +19,10 @@ To eliminate non-deterministic rounding errors across different hardware archite
 The `AdmissibilityGauntlet` is the gatekeeper. It evaluates a `LegalWitness` against a set of constraints:
 
 - **C1-C2 (Grounding)**: Does the citation exist? Does the quote actually appear in the source?
-- **C3-C6 (Reasoning)**: Is the claim supported? Is the authority "Good Law"? Is the inference valid?
-- **C7 (Procedural)**: Have conflicts been disclosed?
+- **C3-C6 (Legacy simulation checks)**: Exact quotations and basic metadata checks. Rule applications cannot pass this path.
+- **C7 (Legacy simulation check)**: Witness-supplied conflict-search metadata is never treated as authenticated coverage.
+
+Certified admission uses a separately authorized proof context and the pinned Lean checker. Source authority, facts, applicability, formalization, exceptions, coverage, and review credentials remain distinct qualification obligations.
 
 ## 4. Commitment Membrane
 The `CommitmentMembrane` manages the transition from a "Candidate" (proposed by an NPE) to a "Committed" claim. 
@@ -41,10 +43,10 @@ The kernel uses an append-only `.ndjson` log for receipts and traces.
 - **External Anchors**: The `RootAnchor` trait allows stapling the terminal root to Git history or other audit trails.
 
 ## 7. Portable Evidence Bundle
-The `BundleManager` can export the entire audit state into a self-contained directory, including the actual source text (evidence substrate). This allows third parties to verify the legal trajectory without trusting the original generator.
-## 8. Commercial-Grade Metadata
+The `BundleManager` exports audit state and proof artifacts. Third parties can verify integrity and replay proofs using independently supplied trust roots; this does not independently establish legal correctness.
+## 8. Archival Metadata
 To support scholarly archival and law-firm-level auditing, the kernel tracks rich metadata:
 - **Counsel & Firm ID**: Identifies the generating entities for accountability.
 - **Citation Confidence**: Quantifies the model's self-assessment of source binding.
-- **Review Status**: Tracks the lifecycle of a witness (Draft, Certified, Adversarial Audit).
-- **Metadata Persistence**: All commercial metadata is hashed into the `TransitionTrace`, ensuring that audit trails remain intact across years of storage.
+- **Review Status**: Tracks untrusted internal workflow labels; these labels cannot authorize certification.
+- **Metadata Persistence**: Metadata is hashed into the `TransitionTrace` for integrity checking.

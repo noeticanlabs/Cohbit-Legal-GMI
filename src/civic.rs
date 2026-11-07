@@ -15,6 +15,7 @@ pub enum CivicClaimType {
 pub enum CivicVerificationState {
     Proposed,
     Supported,
+    Qualified,
     Uncertain,
     Rejected,
     Escalated,
@@ -49,20 +50,82 @@ pub struct CivicClaim {
 pub struct CitizenResponse {
     pub summary: String,
     pub supported_claims: Vec<CivicClaim>,
+    #[serde(default)]
+    pub qualified_claims: Vec<CivicClaim>,
     pub unresolved_claims: Vec<CivicClaim>,
     pub next_steps: Vec<String>,
     pub external_submission_authorized: bool,
 }
 
 impl CitizenResponse {
+    /// Legacy/untrusted construction: public labels cannot create support.
     pub fn build(summary: String, claims: Vec<CivicClaim>, next_steps: Vec<String>) -> Self {
-        let (supported_claims, unresolved_claims) = claims.into_iter().partition(|claim| {
-            claim.verification_state == CivicVerificationState::Supported
-                && matches!(claim.human_review_state, HumanReviewState::Reviewed { .. })
-        });
+        Self {
+            summary,
+            supported_claims: vec![],
+            qualified_claims: vec![],
+            unresolved_claims: claims,
+            next_steps,
+            external_submission_authorized: false,
+        }
+    }
+
+    /// Promote only claims bound to canonical proof receipts whose status was
+    /// freshly recomputed under operator trust policy.
+    pub fn build_from_receipts(
+        summary: String,
+        claims: Vec<CivicClaim>,
+        receipts: &[crate::receipt::LegalReceipt],
+        policy: &crate::proof::TrustPolicy,
+        now: &str,
+        next_steps: Vec<String>,
+    ) -> Self {
+        let mut proof_statuses = std::collections::BTreeMap::new();
+        for receipt in receipts {
+            let Some(trace) = &receipt.trace else {
+                continue;
+            };
+            let Some(proof) = &trace.legal_proof else {
+                continue;
+            };
+            if receipt.verify_canonical().is_ok() {
+                if let Ok(checked) = proof.check(policy, now) {
+                    proof_statuses.insert(proof.context.claim_id.clone(), checked.status().clone());
+                }
+            }
+        }
+        let mut supported_claims = Vec::new();
+        let mut qualified_claims = Vec::new();
+        let mut unresolved_claims = Vec::new();
+        for mut claim in claims {
+            match proof_statuses.get(&claim.claim_id) {
+                Some(crate::proof::ProofStatus::ProvedWithinScope) => {
+                    claim.verification_state = CivicVerificationState::Supported;
+                    supported_claims.push(claim);
+                }
+                Some(crate::proof::ProofStatus::Qualified) => {
+                    claim.verification_state = CivicVerificationState::Qualified;
+                    claim.limitations.push(
+                        "Qualified proof: assumptions, coverage, interpretation, or domain review limits apply"
+                            .into(),
+                    );
+                    qualified_claims.push(claim);
+                }
+                _ => {
+                    if matches!(
+                        claim.verification_state,
+                        CivicVerificationState::Supported | CivicVerificationState::Qualified
+                    ) {
+                        claim.verification_state = CivicVerificationState::Uncertain;
+                    }
+                    unresolved_claims.push(claim);
+                }
+            }
+        }
         Self {
             summary,
             supported_claims,
+            qualified_claims,
             unresolved_claims,
             next_steps,
             external_submission_authorized: false,

@@ -10,6 +10,12 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegalManifold {
     pub claims: Vec<LegalClaim>,
+    #[serde(
+        default,
+        alias = "claim_statuses",
+        skip_serializing_if = "BTreeMap::is_empty"
+    )]
+    pub claim_proof_status_at_admission: BTreeMap<crate::ClaimId, crate::proof::ProofStatus>,
     pub references: BTreeMap<ReferenceId, LegalReference>,
     pub jurisdiction_graph: Vec<JurisdictionEdge>,
     pub procedural_posture: ProceduralPosture,
@@ -39,6 +45,8 @@ struct ManifoldCommitmentView<'a> {
     domain: &'static str,
     schema_version: &'static str,
     claims: &'a Vec<LegalClaim>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    claim_proof_status_at_admission: &'a BTreeMap<crate::ClaimId, crate::proof::ProofStatus>,
     references: &'a BTreeMap<ReferenceId, LegalReference>,
     jurisdiction_graph: &'a Vec<JurisdictionEdge>,
     valuation: &'a String,
@@ -79,6 +87,7 @@ impl LegalManifold {
     pub fn new(procedural_posture: ProceduralPosture) -> Self {
         Self {
             claims: Vec::new(),
+            claim_proof_status_at_admission: BTreeMap::new(),
             references: BTreeMap::new(),
             jurisdiction_graph: Vec::new(),
             procedural_posture,
@@ -97,6 +106,7 @@ impl LegalManifold {
             domain: "cohbit-legal-gmi/content-state/v2",
             schema_version: "2.0.0",
             claims: &self.claims,
+            claim_proof_status_at_admission: &self.claim_proof_status_at_admission,
             references: &self.references,
             jurisdiction_graph: &self.jurisdiction_graph,
             valuation: &self.valuation,

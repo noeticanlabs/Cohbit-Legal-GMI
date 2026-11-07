@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthoritativeSourceRecord {
+pub struct IntegritySourceRecord {
     pub reference: LegalReference,
     pub publisher: String,
     pub official_url: String,
@@ -29,7 +29,7 @@ pub struct SignedCorpusManifest {
 
 impl SignedCorpusManifest {
     pub fn sign(
-        records: &BTreeMap<String, AuthoritativeSourceRecord>,
+        records: &BTreeMap<String, IntegritySourceRecord>,
         key_id: &str,
         key: &SigningKey,
     ) -> Self {
@@ -44,19 +44,21 @@ impl SignedCorpusManifest {
     }
 }
 
-pub struct VerifiedCorpusAdapter {
-    records: BTreeMap<String, AuthoritativeSourceRecord>,
+/// Signature-verified corpus integrity. This does not establish publisher
+/// authority, legal status, applicability, or faithful interpretation.
+pub struct IntegrityCheckedCorpusAdapter {
+    records: BTreeMap<String, IntegritySourceRecord>,
     manifest: SignedCorpusManifest,
 }
 
-impl VerifiedCorpusAdapter {
+impl IntegrityCheckedCorpusAdapter {
     pub fn open(
-        records: BTreeMap<String, AuthoritativeSourceRecord>,
+        records: BTreeMap<String, IntegritySourceRecord>,
         manifest: SignedCorpusManifest,
         trusted_key: &VerifyingKey,
     ) -> Result<Self, AdapterError> {
         if records.is_empty() {
-            return Err(AdapterError::Internal("Verified corpus is empty".into()));
+            return Err(AdapterError::Internal("Integrity corpus is empty".into()));
         }
         let computed_hash = stable_hash(&records);
         if computed_hash != manifest.records_hash {
@@ -89,7 +91,7 @@ impl VerifiedCorpusAdapter {
                 || !verify_status_trace_hash(&record.status_trace)
             {
                 return Err(AdapterError::Internal(format!(
-                    "Incomplete authoritative source record: {}",
+                    "Incomplete integrity-corpus source record: {}",
                     citation
                 )));
             }
@@ -98,7 +100,7 @@ impl VerifiedCorpusAdapter {
     }
 }
 
-impl LegalSourceAdapter for VerifiedCorpusAdapter {
+impl LegalSourceAdapter for IntegrityCheckedCorpusAdapter {
     fn resolve_reference(&self, citation: &str) -> Result<LegalReference, AdapterError> {
         self.records
             .get(citation)
@@ -132,7 +134,7 @@ impl LegalSourceAdapter for VerifiedCorpusAdapter {
     }
 
     fn name(&self) -> String {
-        format!("VerifiedCorpus:{}", self.manifest.key_id)
+        format!("IntegrityCheckedCorpus:{}", self.manifest.key_id)
     }
 
     fn version(&self) -> String {
@@ -140,6 +142,11 @@ impl LegalSourceAdapter for VerifiedCorpusAdapter {
     }
 
     fn trust_level(&self) -> AdapterTrust {
-        AdapterTrust::Verified
+        AdapterTrust::LocalUnverified
     }
 }
+
+/// Compatibility names retained for serialized/API consumers. Both mean
+/// integrity checked only and confer no authority or legal verification.
+pub type AuthoritativeSourceRecord = IntegritySourceRecord;
+pub type VerifiedCorpusAdapter = IntegrityCheckedCorpusAdapter;

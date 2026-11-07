@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 fn main() -> anyhow::Result<()> {
-    println!("CohBit Legal GMI: Production-Grade Benchmarking Suite");
+    println!("CohBit Legal GMI: Synthetic Engineering Microbenchmarks");
     println!("=====================================================");
 
     // 1. Performance Test (Micro-benchmarking Apply)
@@ -41,12 +41,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     println!("\n=====================================================");
-    let final_grade = if defense_score > 0.99 && is_deterministic && avg_lat < 500.0 {
-        "A (Production Grade)"
-    } else {
-        "B (Hardening Required)"
-    };
-    println!("FINAL GRADE: {}", final_grade);
+    println!("These synthetic fixture checks do not measure legal accuracy or production fitness.");
 
     Ok(())
 }
