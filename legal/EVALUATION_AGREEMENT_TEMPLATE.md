@@ -2,7 +2,7 @@
 
 **Not an offer or grant of rights. For qualified counsel and rights-holder approval before signature.**
 
-This agreement is entered into on **[Effective Date]** between **[Verified legal owner and licensor; legal entity/name and address]** (“Licensor”) and **[Legal name, address, and authorized representative]** (“Evaluator”). “Noetican Labs” is a proposed commercial brand, and may be named as Licensor only after authority to license has been confirmed.
+This agreement is entered into on **[Effective Date]** between **[Sole proprietor's exact legal name and mailing address]**, an individual operating under the business name **Noetican Labs** (subject to any applicable trade-name registration requirements), (“Licensor”) and **[Evaluator's legal name, address, and authorized representative]** (“Evaluator”). The Licensor must substantiate ownership of or authorization to license the Software. Noetican Labs is not described here as a separate legal entity.
 
 ## 1. Software and approved purpose
 “Software” means the proprietary first-party CohBit Legal GMI software, components, version/build, documentation, and evaluation materials specifically listed in **Schedule A**. Subject to compliance with this agreement, Licensor grants Evaluator a limited, nonexclusive, nontransferable, non-sublicensable, revocable-on-material-breach license during the Evaluation Term to install and execute the Software solely within the designated non-production test environment and for the research, testing, or audit purpose in Schedule A.
@@ -60,7 +60,7 @@ On expiration or termination, Evaluator shall stop use and, subject to applicabl
 - Compliance, privacy and security exhibits:
 - Other legally required provisions:
 
-**Licensor:** [full legal name, authorized signature, date]
+**Licensor:** [sole proprietor's verified full legal name, individual signature, date; indicate “operating as Noetican Labs” only when legally appropriate]
 
 **Evaluator:** [full legal name, authorized signature, date]
 
