@@ -44,6 +44,17 @@ See `docs/validation/LEGAL_PROOF_001_LOCAL.md` for the scoped proof-validation r
 - Deployment-specific privacy, authorization, retention, and data-sharing controls remain required.
 - No filing, public comment, official contact, or other advocacy action is performed automatically.
 
+## LEGAL-DOC-002: document ingestion research (component-only)
+
+The experimental [text ingestion tool](tools/ingest_documents.py) reads strict UTF-8 `.txt`/`.md` sources, preserves original byte spans and SHA-256, and emits **uninterpreted lexical candidates** for further independent review. This is *not* independent legal understanding, legal authority verification, a formal proof, or an integrated Rust/Lean runtime. Unsupported PDF and other formats are refused rather than silently guessed.
+
+```bash
+python -m unittest discover -s tests -v
+python tools/ingest_documents.py --docs-root fixtures/legal_proof_001 --document fictional_notice.txt
+```
+
+See [LEGAL-DOC-002 evidence boundaries](docs/validation/LEGAL_DOC_002_TEXT_INGESTION.md) and the [general-document research plan](docs/research/LEGAL_DOC_002_GENERAL_DOCUMENT_UNDERSTANDING.md). The Python research tests are currently **local validation**, not yet an independently attested full-system evaluation.
+
 ## License and commercial options
 
 **GNU Affero General Public License v3.0 only (AGPL-3.0-only)** — see [LICENSE](LICENSE) for the terms under which the rights holder offers covered original source code. Third-party material retains its own licenses. See the [release audit](docs/licensing/RELEASE_AUDIT_2026-11-07.md) for unresolved chain-of-title and dependency-compliance evidence.
