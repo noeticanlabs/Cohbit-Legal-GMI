@@ -123,11 +123,22 @@ def parse_document(data: bytes, document_id: str = "document") -> dict:
 
 
 def verify_result(data: bytes, result: dict) -> None:
+    if result.get("schema_version") != SCHEMA_VERSION:
+        raise IngestionError("invalid extraction schema")
+    assurance = result.get("assurance", {})
+    if (assurance.get("legal_interpretation") != "not_performed"
+            or assurance.get("external_authority") != "not_checked"
+            or assurance.get("formal_proof") != "not_generated"
+            or assurance.get("full_integrated_runtime") is not False
+            or assurance.get("production_qualified") is not False):
+        raise IngestionError("unearned assurance or full-system claim")
     if hashlib.sha256(data).hexdigest() != result.get("original_sha256"):
         raise IngestionError("document hash mismatch")
     if result.get("original_length_bytes") != len(data):
         raise IngestionError("document length mismatch")
     units = {unit["unit_id"]: unit for unit in result.get("units", [])}
+    if len(units) != len(result.get("units", [])):
+        raise IngestionError("duplicate source unit")
     for item in [*result.get("units", []), *result.get("candidates", [])]:
         s, e, quote = item.get("start_byte"), item.get("end_byte"), item.get("quote")
         if type(s) is not int or type(e) is not int or not 0 <= s < e <= len(data):
@@ -135,8 +146,16 @@ def verify_result(data: bytes, result: dict) -> None:
         if not isinstance(quote, str) or data[s:e] != quote.encode("utf-8"):
             raise IngestionError("evidence quote does not match original bytes")
     for c in result.get("candidates", []):
-        if c.get("evidence_unit_id") not in units:
+        unit = units.get(c.get("evidence_unit_id"))
+        if unit is None:
             raise IngestionError("candidate references non-existent source unit")
+        if any(c.get(k) != unit.get(k) for k in ("start_byte", "end_byte", "quote")):
+            raise IngestionError("candidate evidence diverges from parent unit")
+        kind = c.get("kind")
+        if kind not in PATTERNS or c.get("status") != "uninterpreted_lexical_candidate":
+            raise IngestionError("invalid or upgraded lexical candidate status")
+        if not isinstance(c.get("trigger"), str) or not PATTERNS[kind].fullmatch(c["trigger"]):
+            raise IngestionError("trigger does not match declared lexical pattern")
         s, e = c.get("trigger_start_byte"), c.get("trigger_end_byte")
         if type(s) is not int or type(e) is not int or not 0 <= s < e <= len(data):
             raise IngestionError("invalid trigger offsets")

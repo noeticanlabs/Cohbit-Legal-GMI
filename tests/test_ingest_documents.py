@@ -79,6 +79,27 @@ class IngestionTests(unittest.TestCase):
         with self.assertRaises(IngestionError):
             verify_result(data, result)
 
+    def test_rejects_forged_assurance(self):
+        data = b"Person must comply."
+        result = parse_document(data)
+        result["assurance"]["formal_proof"] = "ProvedWithinScope"
+        with self.assertRaises(IngestionError):
+            verify_result(data, result)
+
+    def test_rejects_forged_candidate_status(self):
+        data = b"Person must comply."
+        result = parse_document(data)
+        result["candidates"][0]["status"] = "ProvedWithinScope"
+        with self.assertRaises(IngestionError):
+            verify_result(data, result)
+
+    def test_rejects_wrong_parent_evidence(self):
+        data = b"Person must comply.\nUnless excused."
+        result = parse_document(data)
+        result["candidates"][0]["evidence_unit_id"] = "line-2"
+        with self.assertRaises(IngestionError):
+            verify_result(data, result)
+
     def test_rejects_modified_document_bytes(self):
         data = b"Person must comply."
         result = parse_document(data)
