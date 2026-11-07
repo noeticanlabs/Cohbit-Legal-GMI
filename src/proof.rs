@@ -585,21 +585,6 @@ mod tests {
             matter_type: "public-comment-deadline".into(),
             stage: "open-comment".into(),
         });
-        let claim = LegalClaim {
-            id: ClaimId("deadline-2030-01-31".into()),
-            text: "The fictional public-comment deadline is 2030-01-31T17:00:00-06:00.".into(),
-            cited_reference: None,
-            quoted_text: None,
-            authority_label: AuthorityLabel::Binding,
-            inference: InferenceKind::RuleApplication {
-                rule_claims: vec![],
-                fact_claims: vec![],
-            },
-        };
-        let witness = LegalWitness {
-            proposed_claim: claim.clone(),
-            ..Default::default()
-        };
         let source = SourceEvidence {
             text: include_str!("../fixtures/legal_proof_001/fictional_notice.txt").into(),
             publisher: "Fictional Public Comment Agency (test authority)".into(),
@@ -626,15 +611,14 @@ mod tests {
         let passage = Passage {
             source: "notice".into(),
             start: 0,
-            end: 17,
-            exact_text: "FICTIONAL NOTICE:".into(),
+            end: source.text.len(),
+            exact_text: source.text.clone(),
         };
-        let amendment_fragment = "FICTIONAL AMENDMENT REGISTER:";
         let amendment_passage = Passage {
             source: "amendments".into(),
             start: 0,
-            end: amendment_fragment.len(),
-            exact_text: amendment_fragment.into(),
+            end: amendment_source.text.len(),
+            exact_text: amendment_source.text.clone(),
         };
         let rule = HornRule {
             body: vec![1],
@@ -653,6 +637,30 @@ mod tests {
         let mut sources = BTreeMap::new();
         sources.insert("notice".into(), source.clone());
         sources.insert("amendments".into(), amendment_source.clone());
+        // The substantive answer is generated here from authenticated notice
+        // bytes. No deadline or intermediate result is passed to this API.
+        let temporal = crate::temporal::TemporalCertificate::derive_from_notice_evidence(
+            "notice",
+            &sources,
+            1_894_730_400,
+            vec![],
+        )
+        .unwrap();
+        let claim = LegalClaim {
+            id: ClaimId(format!("deadline-derived-{}", temporal.conclusion_instant)),
+            text: temporal.canonical_claim_text(),
+            cited_reference: None,
+            quoted_text: None,
+            authority_label: AuthorityLabel::Binding,
+            inference: InferenceKind::RuleApplication {
+                rule_claims: vec![],
+                fact_claims: vec![],
+            },
+        };
+        let witness = LegalWitness {
+            proposed_claim: claim.clone(),
+            ..Default::default()
+        };
         let mut propositions = BTreeMap::new();
         propositions.insert(
             1,
@@ -766,44 +774,7 @@ mod tests {
                     },
                 ],
                 conclusion: 2,
-                temporal: crate::temporal::TemporalCertificate {
-                    publication: crate::temporal::CivilDate {
-                        year: 2030,
-                        month: 1,
-                        day: 1,
-                    },
-                    publication_day: 21_915,
-                    calendar_days: 30,
-                    start_day_included: false,
-                    target_day: 21_945,
-                    close_time: crate::temporal::WallTime {
-                        hour: 17,
-                        minute: 0,
-                        second: 0,
-                    },
-                    close_second: 61_200,
-                    offset_seconds: -21_600,
-                    local_second: 1_896_109_200,
-                    base_instant: 1_896_130_800,
-                    verification_instant: 1_894_730_400,
-                    base_evidence_source: "notice".into(),
-                    extensions: vec![],
-                    selected_extension: None,
-                    conclusion_local: crate::temporal::LocalDateTime {
-                        date: crate::temporal::CivilDate {
-                            year: 2030,
-                            month: 1,
-                            day: 31,
-                        },
-                        time: crate::temporal::WallTime {
-                            hour: 17,
-                            minute: 0,
-                            second: 0,
-                        },
-                        offset_seconds: -21_600,
-                    },
-                    conclusion_instant: 1_896_130_800,
-                },
+                temporal,
             },
             checker_version: "lean-4.29.1/legal-proof-horn-temporal-v2".into(),
             checker_hash: checker_hash.clone(),
@@ -861,6 +832,7 @@ mod tests {
     fn real_lean_checker_controls_certified_runtime_and_receipt() {
         let mut f = fixture();
         let initial = f.manifold.clone();
+        let derived_claim_id = f.artifact.context.claim_id.clone();
         let (ablated_state, ablated) = crate::apply(
             initial.clone(),
             f.witness.clone(),
@@ -891,7 +863,7 @@ mod tests {
         assert_eq!(
             state
                 .claim_proof_status_at_admission
-                .get(&ClaimId("deadline-2030-01-31".into())),
+                .get(&ClaimId(derived_claim_id.clone())),
             Some(&ProofStatus::Qualified)
         );
         let trace = output.receipt.trace.as_ref().unwrap();
@@ -917,7 +889,7 @@ mod tests {
         let response = CitizenResponse::build_from_receipts(
             "Fictional deadline pilot".into(),
             vec![CivicClaim {
-                claim_id: "deadline-2030-01-31".into(),
+                claim_id: derived_claim_id,
                 claim_type: CivicClaimType::Procedural,
                 text: f.artifact.context.claim_text.clone(),
                 agency_id: Some("fictional-agency".into()),

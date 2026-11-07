@@ -30,3 +30,30 @@ temporal certificate's conclusion equals its temporal semantics;
 The civil-date-to-day-index conversion and the operator-owned checker binary
 remain explicit trusted-computing-base boundaries. This model does not claim a
 named timezone database or holiday/business-day calendar.
+
+## Generative demonstration
+
+`TemporalCertificate::derive_from_notice_evidence` parses the bounded notice
+grammar from the exact `SourceEvidence.text` bytes. Its arguments contain the
+source ID, verification instant, and authenticated extension inputs, but no
+deadline, target date, intermediate calculation, conclusion instant, or claim
+text. It generates all of those outputs. The complete certified fixture builds
+its `LegalClaim` from that generated output and only then signs the proof
+context and invokes the Lean checker.
+
+The regression test `derives_substantive_deadline_from_notice_without_conclusion_input`
+records the derivation:
+
+```text
+publication input       2030-01-01
+calendar-day input      30 (start day excluded)
+closing-time input      17:00:00 UTC-06:00
+derived target day      2030-01-31
+derived local second    1896109200
+derived UTC instant     1896130800
+generated claim         2030-01-31T17:00:00-06:00
+```
+
+The same test changes only the authenticated publication input to `2030-01-02`
+and obtains `2030-02-01T17:00:00-06:00`, demonstrating that the conclusion is
+computed rather than selected from a supplied expected answer.

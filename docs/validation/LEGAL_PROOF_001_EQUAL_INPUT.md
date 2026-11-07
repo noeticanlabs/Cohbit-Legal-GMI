@@ -12,3 +12,8 @@ comparison unless those inputs hash identically.
 The Rust regression test also records both receipt hashes, the shared input
 hash, decisions, positive guarantees, and explicit non-guarantees in the
 serializable `WorkflowComparison` value.
+
+The certified side's deadline and claim text are generated from exact notice
+bytes by the no-conclusion-input derivation API before context signing. The
+legacy side receives the same generated witness but cannot establish the
+derivation or admit it without the certified workflow.
