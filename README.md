@@ -44,6 +44,14 @@ See `docs/validation/LEGAL_PROOF_001_LOCAL.md` for the scoped proof-validation r
 - Deployment-specific privacy, authorization, retention, and data-sharing controls remain required.
 - No filing, public comment, official contact, or other advocacy action is performed automatically.
 
-## License
+## Licensing and commercial use
+
+**Proprietary — all rights reserved.** This repository does not grant free commercial or production rights, an open-source license, or any automatic evaluation license.
+
+The copyright notice currently identifies “CohBit”; the rights holder's legal identity and the authority of Noetican Labs to license this work are pending verification. Neither this notice nor the proposed contracts transfers intellectual-property ownership.
+
+See [LICENSE.md](LICENSE.md) for the rights-reservation notice and [legal/README.md](legal/README.md) for the proposed research-evaluation and paid commercial agreements. **The agreement templates are drafts only and do not grant rights until completed and signed by authorized parties.** No commercial pricing or royalty applies without an executed order.
+
+The Software remains a research prototype, not production-qualified for legal advice. Separate technical and independent legal-domain gates govern permitted deployment.
 
 Copyright (c) 2026 CohBit. All rights reserved. Proprietary and Confidential.
