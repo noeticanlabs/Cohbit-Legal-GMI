@@ -5,10 +5,13 @@
 ## A. Legal ownership and licensor identity — BLOCKING
 - [ ] Determine the existing “CohBit” copyright notice's legal owner (person/entity).
 - [ ] Confirm which entity or sole proprietor owns original Rust, Lean, documentation, fixtures, trademarks and other first-party material.
-- [ ] Confirm whether “Noetican Labs” is a registered legal entity, assumed/trade name, or proposed brand; use the accurate legal name on all contracts.
+- [x] Operator confirms Noetican Labs is operated as a **sole proprietorship** under the individual's legal name, not an LLC or corporation.
+- [ ] Verify the sole proprietor's **exact full legal name and spelling** for contracts, taxes and copyright notices.
+- [ ] Verify whether Noetican Labs has a registered trade name/DBA or other required local filing; do not imply registration without evidence.
 - [ ] Obtain appropriate signed assignment or written license authorization where rights move between parties; do not rely on changing a README.
 - [ ] Review employment/contractor/work-made-for-hire and any third-party/AI-generated contribution rights.
-- [ ] Confirm signer authority and establish a genuine company licensing contact channel.
+- [ ] Confirm signer authority (sole proprietor signs individually), a non-home-address contact channel, and where to receive contractual notices.
+- [ ] Review sole-proprietor personal liability, professional/technology E&O and cyber insurance, and whether an LLC should be established before consequential live deployments.
 
 ## B. Third-party distribution rights — BLOCKING for releases
 - [ ] Generate and review a version-specific Rust and Lean SBOM.
