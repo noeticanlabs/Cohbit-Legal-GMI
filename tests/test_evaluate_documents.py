@@ -50,6 +50,21 @@ class EvaluationTests(unittest.TestCase):
         report = evaluate(self.gold, self.pred, self.root, "component_control")
         self.assertFalse(report["pass_configured_technical_gate"])
 
+    def test_always_escalate_never_passes_scoring_gate(self):
+        self.pred["a"]["decision"] = "escalate"
+        self.pred["a"]["evidence_spans"] = []
+        report = evaluate(self.gold, self.pred, self.root, "full_integrated")
+        self.assertFalse(report["pass_configured_technical_gate"])
+
+    def test_unsupported_not_mentioned_refuses_closed_world_claim(self):
+        self.gold["a"]["gold_label"] = "not_mentioned"
+        self.gold["a"]["evidence_spans"] = []
+        self.pred["a"]["decision"] = "not_mentioned"
+        self.pred["a"]["evidence_spans"] = []
+        report = evaluate(self.gold, self.pred, self.root, "full_integrated")
+        self.assertFalse(report["pass_configured_technical_gate"])
+        self.assertEqual(report["failures"][0]["failure"], "unsupported closed-world not_mentioned conclusion")
+
     def test_missing_evidence_fails(self):
         self.pred["a"]["evidence_spans"] = []
         report = evaluate(self.gold, self.pred, self.root, "full_integrated")

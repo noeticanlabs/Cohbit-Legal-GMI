@@ -102,6 +102,11 @@ def evaluate(gold, predictions, docs_root, mode, min_cases=1, min_families=1, mi
             outcomes["escalated"] += 1
             family_results[family]["escalated"] += 1
             continue
+        if decision == "not_mentioned":
+            # A quote-based scorer does not prove a complete search or
+            # rule out exceptions; closed-world absence needs another gate.
+            outcomes["unsupported_absence"] += 1
+            failures.append({"case_id": cid, "failure": "unsupported closed-world not_mentioned conclusion"})
         outcomes["answered"] += 1
         family_results[family]["answered"] += 1
         if label != decision:
@@ -138,7 +143,7 @@ def evaluate(gold, predictions, docs_root, mode, min_cases=1, min_families=1, mi
         "by_family": {k: dict(v) for k, v in sorted(family_results.items())},
         "failures": failures,
         "pass_zero_false_conclusions_and_exact_evidence": not failures,
-        "pass_configured_technical_gate": (not failures and answered / len(gold) >= min_coverage and mode == "full_integrated"),
+        "pass_configured_technical_gate": (not failures and answered > 0 and answered / len(gold) >= min_coverage and mode == "full_integrated"),
         "configured_minimum_coverage": min_coverage,
         "limitations": "Gold labels, source authenticity, execution mode and independence must be verified externally. No verified legal-accuracy or proof-soundness claim follows from this score.",
     }
