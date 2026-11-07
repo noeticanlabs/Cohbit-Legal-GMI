@@ -19,3 +19,6 @@ fixtures/demo_data/
 !lean/lean-toolchain
 !package.json
 !package-lock.json
+
+# Legacy unreviewed archives should not be recommitted to open-source releases
+/Cohbit-Legal-GMI-*.zip

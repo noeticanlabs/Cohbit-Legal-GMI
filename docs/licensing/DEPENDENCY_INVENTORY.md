@@ -1,0 +1,107 @@
+# Dependency inventory — AGPL release audit
+
+**Generated from Cargo.lock at master commit 20207b4, reviewed 2026-11-07.**
+
+This is an *inventory*, not a verified license-compliance report. All package versions, license texts, exception clauses, native libraries, notices, and dependency trees must be checked at source and included where required before redistributing binaries. The Rust lockfile includes 97 third-party package/version entries. Lean toolchain: `leanprover/lean4:v4.29.1`.
+
+| Package | Locked version | License verification |
+|---|---|---|
+| `android_system_properties` | `0.1.5` | Pending |
+| `anstream` | `1.0.0` | Pending |
+| `anstyle` | `1.0.14` | Pending |
+| `anstyle-parse` | `1.0.0` | Pending |
+| `anstyle-query` | `1.1.5` | Pending |
+| `anstyle-wincon` | `3.0.11` | Pending |
+| `anyhow` | `1.0.104` | Pending |
+| `arrayvec` | `0.7.8` | Pending |
+| `autocfg` | `1.5.1` | Pending |
+| `base64ct` | `1.8.3` | Pending |
+| `blake3` | `1.8.7` | Pending |
+| `block-buffer` | `0.10.4` | Pending |
+| `bumpalo` | `3.20.2` | Pending |
+| `cc` | `1.11.1` | Pending |
+| `cfg-if` | `1.0.5` | Pending |
+| `chrono` | `0.4.45` | Pending |
+| `clap` | `4.6.7` | Pending |
+| `clap_builder` | `4.6.7` | Pending |
+| `clap_derive` | `4.6.7` | Pending |
+| `clap_lex` | `1.1.1` | Pending |
+| `colorchoice` | `1.0.5` | Pending |
+| `const-oid` | `0.9.6` | Pending |
+| `constant_time_eq` | `0.4.2` | Pending |
+| `core-foundation-sys` | `0.8.7` | Pending |
+| `cpufeatures` | `0.2.17` | Pending |
+| `cpufeatures` | `0.3.1` | Pending |
+| `crypto-common` | `0.1.7` | Pending |
+| `curve25519-dalek` | `4.1.3` | Pending |
+| `curve25519-dalek-derive` | `0.1.1` | Pending |
+| `der` | `0.7.10` | Pending |
+| `digest` | `0.10.7` | Pending |
+| `ed25519` | `2.2.3` | Pending |
+| `ed25519-dalek` | `2.2.0` | Pending |
+| `fiat-crypto` | `0.2.9` | Pending |
+| `find-msvc-tools` | `0.1.15` | Pending |
+| `futures-core` | `0.3.32` | Pending |
+| `futures-task` | `0.3.32` | Pending |
+| `futures-util` | `0.3.32` | Pending |
+| `generic-array` | `0.14.7` | Pending |
+| `getrandom` | `0.2.17` | Pending |
+| `heck` | `0.5.0` | Pending |
+| `hex` | `0.4.3` | Pending |
+| `iana-time-zone` | `0.1.65` | Pending |
+| `iana-time-zone-haiku` | `0.1.2` | Pending |
+| `is_terminal_polyfill` | `1.70.2` | Pending |
+| `itoa` | `1.0.18` | Pending |
+| `js-sys` | `0.3.98` | Pending |
+| `libc` | `0.2.186` | Pending |
+| `log` | `0.4.29` | Pending |
+| `memchr` | `2.8.3` | Pending |
+| `num-bigint` | `0.4.8` | Pending |
+| `num-integer` | `0.1.47` | Pending |
+| `num-rational` | `0.4.2` | Pending |
+| `num-traits` | `0.2.19` | Pending |
+| `once_cell` | `1.21.4` | Pending |
+| `once_cell_polyfill` | `1.70.2` | Pending |
+| `pin-project-lite` | `0.2.17` | Pending |
+| `pkcs8` | `0.10.2` | Pending |
+| `proc-macro2` | `1.0.107` | Pending |
+| `quote` | `1.0.47` | Pending |
+| `rand_core` | `0.6.4` | Pending |
+| `rustc_version` | `0.4.1` | Pending |
+| `rustversion` | `1.0.22` | Pending |
+| `semver` | `1.0.28` | Pending |
+| `serde` | `1.0.229` | Pending |
+| `serde_core` | `1.0.229` | Pending |
+| `serde_derive` | `1.0.229` | Pending |
+| `serde_json` | `1.0.154` | Pending |
+| `sha2` | `0.10.9` | Pending |
+| `shlex` | `2.0.1` | Pending |
+| `signature` | `2.2.0` | Pending |
+| `slab` | `0.4.12` | Pending |
+| `spki` | `0.7.3` | Pending |
+| `strsim` | `0.11.1` | Pending |
+| `subtle` | `2.6.1` | Pending |
+| `syn` | `2.0.117` | Pending |
+| `syn` | `3.0.9` | Pending |
+| `thiserror` | `2.0.21` | Pending |
+| `thiserror-impl` | `2.0.21` | Pending |
+| `typenum` | `1.20.1` | Pending |
+| `unicode-ident` | `1.0.27` | Pending |
+| `utf8parse` | `0.2.2` | Pending |
+| `version_check` | `0.9.5` | Pending |
+| `wasi` | `0.11.1+wasi-snapshot-preview1` | Pending |
+| `wasm-bindgen` | `0.2.121` | Pending |
+| `wasm-bindgen-macro` | `0.2.121` | Pending |
+| `wasm-bindgen-macro-support` | `0.2.121` | Pending |
+| `wasm-bindgen-shared` | `0.2.121` | Pending |
+| `windows-core` | `0.62.2` | Pending |
+| `windows-implement` | `0.60.2` | Pending |
+| `windows-interface` | `0.59.3` | Pending |
+| `windows-link` | `0.2.1` | Pending |
+| `windows-result` | `0.4.1` | Pending |
+| `windows-strings` | `0.5.1` | Pending |
+| `windows-sys` | `0.61.2` | Pending |
+| `zeroize` | `1.9.1` | Pending |
+| `zmij` | `1.0.23` | Pending |
+
+No assertion about the licenses of these crates has been made by this audit. The project also includes generated evidence fixtures, a previous ZIP archive in Git history, and Lean tooling with separate upstream terms.

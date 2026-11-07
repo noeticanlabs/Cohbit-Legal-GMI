@@ -1,6 +1,6 @@
 # CohBit Legal GMI — Open-source and commercial licensing policy
 
-**Proposed AGPLv3 adoption package • 2026-11-07 • Not adopted on master until merged**
+**AGPLv3 + optional paid commercial licensing • selected 2026-11-07 • release status follows the `master` branch**
 
 ## Proposed open-source license
 
@@ -43,7 +43,7 @@ Official information:
 - https://opensource.org/osd
 
 ## Agreed licensing direction (business decision, not yet a release)
-On 2026-11-07 the project operator selected **AGPLv3 plus optional paid commercial licensing**. This selects the intended model for CohBit Legal GMI; it does not by itself demonstrate copyright ownership, resolve third-party licensing obligations, execute a customer agreement, or constitute a release from `master`.
+On 2026-11-07 the project operator selected **AGPLv3 plus optional paid commercial licensing** and explicitly authorized merging the licensing package into `master`. This business decision does not by itself demonstrate copyright ownership, resolve third-party licensing obligations, or execute a customer agreement. Once merged, the AGPL license grant is real for covered original source code; unresolved legal due-diligence issues remain documented.
 
 The open-source license is a complete legal route to use CohBit commercially without paying. A **different, independently negotiated paid license** is offered only as an alternative for customers who prefer different copyright terms or paid services. AGPL licensees retain their AGPL rights whether or not they purchase a paid offering.
 

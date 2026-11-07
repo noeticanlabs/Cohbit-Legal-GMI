@@ -1,7 +1,7 @@
 # ADR-001 — AGPLv3 + optional commercial dual licensing
 
 **Decision recorded:** 2026-11-07  
-**Status:** Business model SELECTED; legal release PENDING
+**Status:** Business model SELECTED; operator authorized merge on 2026-11-07; chain-of-title and third-party compliance audit remains OPEN
 
 ## Decision
 CohBit Legal GMI will pursue:
@@ -28,4 +28,4 @@ CohBit Legal GMI will pursue:
 - [ ] Decide whether inbound contributions require a CLA, assignment, or alternative scoped permission.
 - [ ] Define pricing and technical services after independent legal-domain qualification.
 
-**Business model selection is confirmed; repository relicensing and customer commercialization are not yet completed.**
+**The operator authorized the AGPL release. Customer commercial-license contracting and external legal due diligence remain outstanding; no customer agreement is implied.**
