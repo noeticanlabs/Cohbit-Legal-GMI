@@ -17,7 +17,7 @@
 ## Commercial expectations — important
 - [x] Choose **genuine OSI-compatible open source**, not BSL/source-available.
 - [x] Stage **AGPL-3.0-only** as the strong-copyleft candidate, not Apache/MIT.
-- [ ] Rights holder acknowledges that AGPL allows legally compliant **commercial use without payment** to Noetican Labs.
+- [x] Project operator selected **AGPLv3 plus optional paid commercial licensing** and was informed that AGPL permits compliant commercial use without payment. Final rights-holder signoff to distribute remains a separate, uncompleted requirement.
 - [ ] Establish optional separately negotiated commercial licensing terms if dual licensing is desired.
 - [ ] Adopt inbound contributor permission/CLA policy before accepting contributions intended for future dual licensing.
 - [ ] Verify patent grants and any trademark implications with counsel.

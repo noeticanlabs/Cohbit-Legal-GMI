@@ -41,3 +41,14 @@ Official information:
 - https://www.gnu.org/licenses/agpl-3.0.en.html
 - https://www.gnu.org/licenses/gpl-faq.html
 - https://opensource.org/osd
+
+## Agreed licensing direction (business decision, not yet a release)
+On 2026-11-07 the project operator selected **AGPLv3 plus optional paid commercial licensing**. This selects the intended model for CohBit Legal GMI; it does not by itself demonstrate copyright ownership, resolve third-party licensing obligations, execute a customer agreement, or constitute a release from `master`.
+
+The open-source license is a complete legal route to use CohBit commercially without paying. A **different, independently negotiated paid license** is offered only as an alternative for customers who prefer different copyright terms or paid services. AGPL licensees retain their AGPL rights whether or not they purchase a paid offering.
+
+### Commercial-license eligibility / contributor governance
+The operator can offer proprietary alternative terms only for copyrighted material they own or have express permission to relicense. Before accepting external code into files intended for dual licensing, establish a clear inbound-contribution policy with appropriate contributor permissions. Do not claim that a GitHub pull request silently assigns a contributor's copyrights.
+
+### Commercial offering status
+No price list, commercial order form, service level, or authorized contact address is currently adopted by this decision. The commercial licensing terms will be negotiated and executed separately with the legally identified sole proprietor; no customer is automatically obligated to pay because of revenue or profitability.
