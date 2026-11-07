@@ -1,4 +1,5 @@
-// Copyright (c) 2026 CohBit. All rights reserved. Proprietary and Confidential.
+// Copyright (c) 2026 CohBit. All rights reserved.
+// SPDX-License-Identifier: AGPL-3.0-only
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]

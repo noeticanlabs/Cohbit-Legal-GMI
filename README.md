@@ -44,6 +44,12 @@ See `docs/validation/LEGAL_PROOF_001_LOCAL.md` for the scoped proof-validation r
 - Deployment-specific privacy, authorization, retention, and data-sharing controls remain required.
 - No filing, public comment, official contact, or other advocacy action is performed automatically.
 
-## License
+## License and commercial options
 
-Copyright (c) 2026 CohBit. All rights reserved. Proprietary and Confidential.
+**GNU Affero General Public License v3.0 only (AGPL-3.0-only)** — see [LICENSE](LICENSE), **subject to verification of the rights to license the first-party material**. This proposal becomes the project's adopted licensing position only after it is reviewed and merged by the rights holder.
+
+Under the AGPL, users may use, study, modify, redistribute, and **commercially use** the licensed code while complying with the license. In particular, qualifying distributions and modified network-accessible versions carry corresponding-source obligations. **AGPL does not require profitable users to pay Noetican Labs.** See [OPEN_SOURCE_COMMERCIAL_MODEL.md](OPEN_SOURCE_COMMERCIAL_MODEL.md).
+
+If the copyright owner controls the necessary rights, they may separately offer negotiated **paid commercial licenses** for customers seeking different terms, plus paid integration, hosting, maintenance, and support.
+
+The 2026 copyright notices are preserved; the exact legal owner and any third-party contributions must be confirmed before merging. The legacy `Cohbit-Legal-GMI-1.0.0-hardened.zip` archive is **excluded** from the proposed AGPL grant pending a separate archive-rights audit. Third-party dependencies are governed by their own licenses. This repository remains a research prototype, not a production-qualified legal-advice system.
