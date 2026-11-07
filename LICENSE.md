@@ -4,7 +4,7 @@
 
 Copyright (c) 2026 CohBit. All rights reserved.
 
-The name above is reproduced from existing repository copyright notices. The legal identity of the rights holder, and any assignment or authority for Noetican Labs to grant licenses, **must be confirmed before customer agreements are issued**. This notice does not represent or accomplish an assignment of rights.
+The name above is reproduced from existing repository copyright notices. The project operator has confirmed that Noetican Labs is operated as a **sole proprietorship under the operator's individual legal name**, not as an LLC or corporation. A sole proprietorship is not a separate rights-holding person. The **exact legal name and spelling**, the original authorship and chain of title, and any trade-name filing must still be verified. Do not change a historical copyright claim or issue customer licenses until ownership and signatory authority are documented. This notice does not represent an assignment of rights.
 
 Unless applicable law, GitHub's applicable terms, or a separate written agreement signed by an authorized rights holder expressly permits an activity, **no license is granted** to reproduce, modify, distribute, sublicense, host, embed, or commercially exploit the covered proprietary software.
 
