@@ -2,7 +2,7 @@
 
 **Negotiation template only; not effective until counsel-approved, completed, and executed by authorized parties.**
 
-This Commercial Software License Agreement (“Agreement”) is made between **[Verified legal software owner/authorized licensor]** (“Licensor”) and **[Customer's complete legal name]** (“Customer”), effective **[date]**. “Noetican Labs” may act as licensor only if the legal chain of title and signatory authority supports it.
+This Commercial Software License Agreement (“Agreement”) is made between **[Sole proprietor's exact legal name and address]**, an individual operating under the business name **Noetican Labs** where legally permitted (“Licensor”), and **[Customer's complete legal name]** (“Customer”), effective **[date]**. Licensor must document ownership of or authority to license the Software; Noetican Labs is not a separate LLC or corporation under the confirmed current structure.
 
 ## 1. Licensed Software; license scope
 The “Software” is the proprietary first-party CohBit Legal GMI version(s), binaries, source access (if any), updates (if included), and documentation identified in Order Schedule A. On payment and continued compliance, Licensor grants Customer a **limited, nonexclusive, nontransferable** license for the **specific authorized commercial production use** described in Schedule A. No rights are implied outside that scope.
@@ -44,7 +44,7 @@ Complete governing law, courts/venue or arbitration, notices, assignment, change
 
 ## Schedule A — Commercial order form
 - Customer legal name and authorized signatory:
-- Licensor legal name and rights-holder authorization:
+- Sole proprietor legal name (verified spelling), trade-name status, and rights-holder authorization:
 - Software versions, modules and environments:
 - Term and effective/renewal dates:
 - Internal / professional / hosted / OEM permitted category:
@@ -79,7 +79,7 @@ Complete governing law, courts/venue or arbitration, notices, assignment, change
 - Suspension, termination and transition:
 - Statutory/nonwaivable terms and mandatory rights:
 
-**Licensor:** [full legal name, authorized signature, date]
+**Licensor:** [sole proprietor's verified full legal name, individual signature, date; “operating as Noetican Labs” if legally appropriate]
 
 **Customer:** [full legal name, authorized signature, date]
 
