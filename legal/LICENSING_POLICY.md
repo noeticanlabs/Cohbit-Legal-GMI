@@ -2,6 +2,9 @@
 
 **Version: internal proposal 0.1 | 2026-11-07 | Not an operative license**
 
+## Licensor identity (sole proprietorship)
+The operator confirms Noetican Labs is a **sole proprietorship**, not a corporation or LLC. Customer agreements must identify the individual under their **verified full legal name**, with “operating as Noetican Labs” or “d/b/a Noetican Labs” used only as consistent with applicable trade-name requirements. The trade name does not create a separate legal entity. Historical “CohBit” copyright notices and chain of title must be reconciled before execution. Sole proprietorship may expose the individual owner to personal obligations; counsel should review product-liability limits and consider future entity formation before live deployments.
+
 ## Business objective
 The authorized rights holder retains ownership of the first-party implementation and charges for *commercial production use*, whether or not the customer reports a net profit. No revenue or profit threshold automatically exempts a business from commercial licensing.
 
