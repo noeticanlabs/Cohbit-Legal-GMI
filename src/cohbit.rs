@@ -7,6 +7,7 @@ use crate::witness::LegalWitness;
 
 use num_rational::BigRational;
 use num_traits::FromPrimitive;
+use serde::{Deserialize, Serialize};
 
 /// The Stability Law: deltaV >= spend - defect (Numerical Sobriety: Rational-based)
 pub fn is_stable(delta_v: &BigRational, spend: &BigRational, defect: &BigRational) -> bool {
@@ -149,6 +150,7 @@ fn apply_inner(
             defect: result.defect_reserve.clone(),
             valuation_pre: valuation_pre.clone(),
             valuation_post: manifold.valuation.clone(),
+            verification_config_hash: Some(crate::receipt::stable_hash(&effective_config)),
             adapter_trace: result.adapter_trace.clone(),
             witness: witness.clone(),
             verifier_result: result.clone(),
@@ -205,6 +207,7 @@ fn apply_inner(
             defect: result.defect_reserve.clone(),
             valuation_pre: valuation_pre.clone(),
             valuation_post: valuation_pre.clone(),
+            verification_config_hash: Some(crate::receipt::stable_hash(&effective_config)),
             adapter_trace: result.adapter_trace.clone(),
             witness: witness.clone(),
             verifier_result: result.clone(),
@@ -300,4 +303,107 @@ pub fn apply_certified(
 pub struct LegalCohBit {
     pub receipt: LegalReceipt,
     pub verifier_result: crate::verifier::VerifierResult,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowFinding {
+    pub decision: VerificationDecision,
+    pub proves: Vec<String>,
+    pub does_not_prove: Vec<String>,
+    pub receipt_hash: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WorkflowComparison {
+    pub equal_input_hash: String,
+    pub legacy: WorkflowFinding,
+    pub certified: WorkflowFinding,
+}
+
+/// Record the guarantees actually obtained from two executions over the same
+/// pre-state and witness. This refuses comparisons with substituted inputs.
+pub fn compare_equal_input_workflows(
+    legacy: &LegalCohBit,
+    certified: &LegalCohBit,
+) -> Result<WorkflowComparison, GmiError> {
+    legacy
+        .receipt
+        .verify_canonical()
+        .map_err(GmiError::VerificationFailed)?;
+    certified
+        .receipt
+        .verify_canonical()
+        .map_err(GmiError::VerificationFailed)?;
+    let legacy_trace = legacy
+        .receipt
+        .trace
+        .as_ref()
+        .ok_or_else(|| GmiError::VerificationFailed("Legacy result has no trace".into()))?;
+    let certified_trace = certified
+        .receipt
+        .trace
+        .as_ref()
+        .ok_or_else(|| GmiError::VerificationFailed("Certified result has no trace".into()))?;
+    let legacy_input = crate::receipt::stable_hash(&(
+        &legacy_trace.pre_state_hash,
+        &legacy_trace.witness,
+        &legacy_trace.spend,
+        &legacy_trace.defect,
+        &legacy_trace.verification_config_hash,
+    ));
+    let certified_input = crate::receipt::stable_hash(&(
+        &certified_trace.pre_state_hash,
+        &certified_trace.witness,
+        &certified_trace.spend,
+        &certified_trace.defect,
+        &certified_trace.verification_config_hash,
+    ));
+    if legacy_input != certified_input {
+        return Err(GmiError::VerificationFailed(
+            "Workflow comparison inputs differ".into(),
+        ));
+    }
+    if legacy.receipt.decision == VerificationDecision::Accept
+        || certified.receipt.decision != VerificationDecision::Accept
+        || certified.receipt.policy_version != crate::proof::PROOF_POLICY
+    {
+        return Err(GmiError::VerificationFailed(
+            "Comparison requires a non-accepted legacy result and an accepted certified result"
+                .into(),
+        ));
+    }
+    let certified_proof = certified_trace.legal_proof.as_ref().ok_or_else(|| {
+        GmiError::VerificationFailed("Certified comparison result has no proof".into())
+    })?;
+    Ok(WorkflowComparison {
+        equal_input_hash: legacy_input,
+        legacy: WorkflowFinding {
+            decision: legacy.receipt.decision.clone(),
+            proves: vec![
+                "A canonical, state-bound receipt records the computational attempt".into(),
+                "A non-accepted decision leaves claim content state-idempotent".into(),
+            ],
+            does_not_prove: vec![
+                "No legal entailment is certified".into(),
+                "No temporal calculation is independently checked".into(),
+                "No claim is admitted unless the legacy verifier independently accepts it".into(),
+            ],
+            receipt_hash: legacy.receipt.receipt_hash.0.clone(),
+        },
+        certified: WorkflowFinding {
+            decision: certified.receipt.decision.clone(),
+            proves: vec![
+                "The accepted receipt is exactly bound to the claim, pre-state, forum, and verification time".into(),
+                "Lean checked Horn entailment from the qualified premises and rules".into(),
+                "Rust replayed civil-date, fixed-offset, effective-period, and extension steps".into(),
+                "Lean checked the normalized temporal arithmetic and selected deadline".into(),
+            ],
+            does_not_prove: vec![
+                "It does not establish open-world legal completeness beyond the signed scope".into(),
+                format!("It does not remove qualification status: {:?}", certified_trace.proof_status),
+                format!("It does not validate sources outside context {}", certified_proof.context.domain),
+            ],
+            receipt_hash: certified.receipt.receipt_hash.0.clone(),
+        },
+    })
 }

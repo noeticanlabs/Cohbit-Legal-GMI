@@ -1,5 +1,9 @@
 # LEGAL-PROOF-001: fictional public-comment deadlines
 
+The current certificate policy is `LEGAL-PROOF-001/horn-temporal-v2`. Deadline
+certificates must contain replayable temporal calculation steps; an opaque
+deadline conclusion atom is insufficient. See `docs/TEMPORAL_MODEL.md`.
+
 Status: engineering implementation complete; independent legal-domain qualification pending.
 
 This experiment supports one conditional conclusion type: a deadline stated by a fictional public-comment notice, after applying an explicitly reviewed calendar/timezone rule and explicit amendment or extension treatment. It does not support real legal advice, environmental-law merits, litigation predictions, filing automation, or a claim about any real court or agency.

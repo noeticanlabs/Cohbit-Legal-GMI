@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-pub const PROOF_POLICY: &str = "LEGAL-PROOF-001/horn-v1";
+pub const PROOF_POLICY: &str = "LEGAL-PROOF-001/horn-temporal-v2";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ProofStatus {
@@ -59,6 +59,7 @@ pub struct Derivation {
     pub rules: Vec<HornRule>,
     pub steps: Vec<ProofStep>,
     pub conclusion: u32,
+    pub temporal: crate::temporal::TemporalCertificate,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -255,7 +256,7 @@ impl ProofArtifact {
     /// Current usability is recomputed; historical artifacts are not rewritten.
     pub fn usability(&self, policy: &TrustPolicy, now: &str) -> ProofStatus {
         let c = &self.context;
-        if self.schema_version != "1.0.0" {
+        if self.schema_version != "2.0.0" {
             return ProofStatus::Rejected;
         }
         let dates = chrono::DateTime::parse_from_rfc3339(now)
@@ -437,6 +438,15 @@ impl ProofArtifact {
                 && self.derivation.premises == c.facts.iter().map(|f| f.atom).collect::<Vec<_>>()
                 && self.derivation.conclusion == c.conclusion,
             "Derivation substitutes qualified context"
+        );
+        self.derivation.temporal.validate(&c.sources)?;
+        ensure!(
+            self.derivation.temporal.verification_instant == at.timestamp(),
+            "Temporal extension selection uses a different verification instant"
+        );
+        ensure!(
+            self.derivation.temporal.canonical_claim_text() == c.claim_text,
+            "Temporal calculation does not state the certified claim"
         );
         ensure!(
             self.derivation.steps.len() <= 10_000,
@@ -735,7 +745,7 @@ mod tests {
             })
             .collect();
         let artifact = ProofArtifact {
-            schema_version: "1.0.0".into(),
+            schema_version: "2.0.0".into(),
             context: context.clone(),
             reviews,
             derivation: Derivation {
@@ -756,8 +766,46 @@ mod tests {
                     },
                 ],
                 conclusion: 2,
+                temporal: crate::temporal::TemporalCertificate {
+                    publication: crate::temporal::CivilDate {
+                        year: 2030,
+                        month: 1,
+                        day: 1,
+                    },
+                    publication_day: 21_915,
+                    calendar_days: 30,
+                    start_day_included: false,
+                    target_day: 21_945,
+                    close_time: crate::temporal::WallTime {
+                        hour: 17,
+                        minute: 0,
+                        second: 0,
+                    },
+                    close_second: 61_200,
+                    offset_seconds: -21_600,
+                    local_second: 1_896_109_200,
+                    base_instant: 1_896_130_800,
+                    verification_instant: 1_894_730_400,
+                    base_evidence_source: "notice".into(),
+                    extensions: vec![],
+                    selected_extension: None,
+                    conclusion_local: crate::temporal::LocalDateTime {
+                        date: crate::temporal::CivilDate {
+                            year: 2030,
+                            month: 1,
+                            day: 31,
+                        },
+                        time: crate::temporal::WallTime {
+                            hour: 17,
+                            minute: 0,
+                            second: 0,
+                        },
+                        offset_seconds: -21_600,
+                    },
+                    conclusion_instant: 1_896_130_800,
+                },
             },
-            checker_version: "lean-4.29.1/legal-proof-horn-v1".into(),
+            checker_version: "lean-4.29.1/legal-proof-horn-temporal-v2".into(),
             checker_hash: checker_hash.clone(),
         };
         let authorities = keys
@@ -787,7 +835,7 @@ mod tests {
             revoked_keys: BTreeSet::new(),
             dependencies,
             checker_path,
-            checker_version: "lean-4.29.1/legal-proof-horn-v1".into(),
+            checker_version: "lean-4.29.1/legal-proof-horn-temporal-v2".into(),
             checker_hash,
             domain_review: None,
         };
@@ -849,6 +897,23 @@ mod tests {
         let trace = output.receipt.trace.as_ref().unwrap();
         assert_eq!(trace.proof_status, Some(ProofStatus::Qualified));
         assert!(trace.legal_proof.is_some());
+        let comparison = crate::cohbit::compare_equal_input_workflows(&ablated, &output).unwrap();
+        assert_eq!(
+            comparison.legacy.decision,
+            crate::verifier::VerificationDecision::Escalate
+        );
+        assert_eq!(
+            comparison.certified.decision,
+            crate::verifier::VerificationDecision::Accept
+        );
+        assert!(comparison
+            .certified
+            .proves
+            .iter()
+            .any(|p| p.contains("temporal")));
+        assert!(serde_json::to_string_pretty(&comparison)
+            .unwrap()
+            .contains("equal_input_hash"));
         let response = CitizenResponse::build_from_receipts(
             "Fictional deadline pilot".into(),
             vec![CivicClaim {
@@ -879,6 +944,63 @@ mod tests {
             CivicVerificationState::Qualified
         );
         assert!(!response.external_submission_authorized);
+
+        let mismatched_response = CitizenResponse::build_from_receipts(
+            "Mismatched civic claim".into(),
+            vec![CivicClaim {
+                claim_id: f.artifact.context.claim_id.clone(),
+                claim_type: CivicClaimType::Procedural,
+                text: "Different claim text under the same ID".into(),
+                agency_id: None,
+                agency_role: None,
+                jurisdiction: f.artifact.context.jurisdiction.clone(),
+                source_ids: vec![],
+                effective_date: None,
+                retrieved_at: None,
+                verification_state: CivicVerificationState::Proposed,
+                limitations: vec![],
+                human_review_state: HumanReviewState::NotReviewed,
+            }],
+            std::slice::from_ref(&output.receipt),
+            &f.policy,
+            &f.config.verification_time,
+            vec![],
+        );
+        assert!(mismatched_response.qualified_claims.is_empty());
+        assert_eq!(mismatched_response.unresolved_claims.len(), 1);
+
+        let mut rejected = output.receipt.clone();
+        rejected.decision = crate::verifier::VerificationDecision::Reject;
+        let rejected_trace = rejected.trace.as_mut().unwrap();
+        rejected_trace.decision = crate::verifier::VerificationDecision::Reject;
+        rejected_trace.verifier_result.decision = crate::verifier::VerificationDecision::Reject;
+        let hash = crate::receipt::canonical_receipt_hash(rejected_trace);
+        rejected_trace.receipt_hash = hash.clone();
+        rejected.receipt_hash = hash;
+        assert!(rejected.verify_canonical().is_ok());
+        let rejected_response = CitizenResponse::build_from_receipts(
+            "Rejected attempt".into(),
+            vec![CivicClaim {
+                claim_id: f.artifact.context.claim_id.clone(),
+                claim_type: CivicClaimType::Procedural,
+                text: f.artifact.context.claim_text.clone(),
+                agency_id: None,
+                agency_role: None,
+                jurisdiction: f.artifact.context.jurisdiction.clone(),
+                source_ids: vec![],
+                effective_date: None,
+                retrieved_at: None,
+                verification_state: CivicVerificationState::Proposed,
+                limitations: vec![],
+                human_review_state: HumanReviewState::NotReviewed,
+            }],
+            &[rejected],
+            &f.policy,
+            &f.config.verification_time,
+            vec![],
+        );
+        assert!(rejected_response.qualified_claims.is_empty());
+        assert_eq!(rejected_response.unresolved_claims.len(), 1);
 
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

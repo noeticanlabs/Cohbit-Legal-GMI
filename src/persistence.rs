@@ -81,6 +81,13 @@ impl PersistenceManager {
         let mut records = Vec::new();
         for line in BufReader::new(File::open(path)?).lines() {
             let trace: TransitionTrace = serde_json::from_str(&line?)?;
+            // A rejected attempt is historical evidence, never an admitted
+            // claim and therefore never part of the current proof index.
+            if trace.decision != VerificationDecision::Accept
+                || trace.policy_version != crate::proof::PROOF_POLICY
+            {
+                continue;
+            }
             let (Some(artifact), Some(original_status)) = (trace.legal_proof, trace.proof_status)
             else {
                 continue;

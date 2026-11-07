@@ -386,6 +386,9 @@ impl BundleManager {
                         "Bundled proof status does not match fresh verification"
                     ));
                 }
+                if trace.decision != crate::verifier::VerificationDecision::Accept {
+                    continue;
+                }
                 current.insert(artifact.context.claim_id.clone(), checked.status().clone());
                 statuses.push(checked.status().clone());
             }

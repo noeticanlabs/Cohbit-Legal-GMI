@@ -17,6 +17,8 @@ pub struct TransitionTrace {
     pub defect: String,
     pub valuation_pre: String,
     pub valuation_post: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verification_config_hash: Option<String>,
     pub adapter_trace: Option<crate::adapter::AdapterTrace>,
     pub witness: crate::witness::LegalWitness,
     pub verifier_result: crate::verifier::VerifierResult,
@@ -56,6 +58,8 @@ struct ReceiptCommitmentView<'a> {
     valuation_post: &'a str,
     spend: &'a str,
     defect: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    verification_config_hash: &'a Option<String>,
     witness: &'a crate::witness::LegalWitness,
     verifier_result: &'a crate::verifier::VerifierResult,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -78,6 +82,7 @@ pub fn canonical_receipt_hash(trace: &TransitionTrace) -> ReceiptHash {
         valuation_post: &trace.valuation_post,
         spend: &trace.spend,
         defect: &trace.defect,
+        verification_config_hash: &trace.verification_config_hash,
         witness: &trace.witness,
         verifier_result: &trace.verifier_result,
         legal_proof: &trace.legal_proof,
@@ -99,6 +104,7 @@ impl LegalReceipt {
             || self.post_state_hash != trace.post_state_hash
             || self.last_receipt_hash != trace.prev_receipt_hash
             || self.post_valuation != trace.valuation_post
+            || trace.decision != trace.verifier_result.decision
         {
             return Err("Receipt fields do not correspond to the transition trace".into());
         }

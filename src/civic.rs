@@ -82,16 +82,39 @@ impl CitizenResponse {
     ) -> Self {
         let mut proof_statuses = std::collections::BTreeMap::new();
         for receipt in receipts {
+            if receipt.decision != crate::verifier::VerificationDecision::Accept
+                || receipt.policy_version != crate::proof::PROOF_POLICY
+                || receipt.verify_canonical().is_err()
+            {
+                continue;
+            }
             let Some(trace) = &receipt.trace else {
                 continue;
             };
+            if trace.decision != crate::verifier::VerificationDecision::Accept
+                || trace.policy_version != crate::proof::PROOF_POLICY
+            {
+                continue;
+            }
             let Some(proof) = &trace.legal_proof else {
                 continue;
             };
-            if receipt.verify_canonical().is_ok() {
-                if let Ok(checked) = proof.check(policy, now) {
-                    proof_statuses.insert(proof.context.claim_id.clone(), checked.status().clone());
-                }
+            let witness_claim = &trace.witness.proposed_claim;
+            if proof.context.claim_id != witness_claim.id.0
+                || proof.context.claim_text != witness_claim.text
+                || proof.context.claim_hash != crate::receipt::stable_hash(witness_claim)
+            {
+                continue;
+            }
+            if let Ok(checked) = proof.check(policy, now) {
+                proof_statuses.insert(
+                    proof.context.claim_id.clone(),
+                    (
+                        proof.context.claim_text.clone(),
+                        proof.context.jurisdiction.clone(),
+                        checked.status().clone(),
+                    ),
+                );
             }
         }
         let mut supported_claims = Vec::new();
@@ -99,11 +122,15 @@ impl CitizenResponse {
         let mut unresolved_claims = Vec::new();
         for mut claim in claims {
             match proof_statuses.get(&claim.claim_id) {
-                Some(crate::proof::ProofStatus::ProvedWithinScope) => {
+                Some((text, jurisdiction, crate::proof::ProofStatus::ProvedWithinScope))
+                    if text == &claim.text && jurisdiction == &claim.jurisdiction =>
+                {
                     claim.verification_state = CivicVerificationState::Supported;
                     supported_claims.push(claim);
                 }
-                Some(crate::proof::ProofStatus::Qualified) => {
+                Some((text, jurisdiction, crate::proof::ProofStatus::Qualified))
+                    if text == &claim.text && jurisdiction == &claim.jurisdiction =>
+                {
                     claim.verification_state = CivicVerificationState::Qualified;
                     claim.limitations.push(
                         "Qualified proof: assumptions, coverage, interpretation, or domain review limits apply"
