@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
 - family-names: "Ellington"
-  given-names: "Michael"
-  affiliation: "NoeticanLabs"
+  given-names: "Micheal O."
+  affiliation: "Noetican Labs"
 title: "CohBit Legal GMI: Research Prototype for Conditional Legal Proofs"
 version: 0.1.0-research
 date-released: 2026-05-09
