@@ -29,3 +29,7 @@ CohBit Legal GMI will pursue:
 - [ ] Define pricing and technical services after independent legal-domain qualification.
 
 **The operator authorized the AGPL release. Customer commercial-license contracting and external legal due diligence remain outstanding; no customer agreement is implied.**
+
+## 2026-11-08 — Named individual licensor
+
+The project operator specified the exact name **Micheal O. Ellington**, an individual operating under the business name **Noetican Labs** as a sole proprietor. The repository now uses that identity as the contact for optional paid commercial licenses and records the operator's copyright claim for original material he owns. The name supplied is **not independently verified**. No LLC/corporation or formally registered DBA is asserted. Historic “CohBit” notices, author identity and third-party rights still require legal review; the existing AGPLv3 rights remain unchanged. See [../../COPYRIGHT.md](../../COPYRIGHT.md) and [../../COMMERCIAL_LICENSE.md](../../COMMERCIAL_LICENSE.md).
