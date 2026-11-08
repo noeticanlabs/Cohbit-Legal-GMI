@@ -1,54 +1,32 @@
-# CohBit Legal GMI — Open-source and commercial licensing policy
+# CohBit Legal GMI — Open-source and optional paid commercial licenses
 
-**AGPLv3 + optional paid commercial licensing • selected 2026-11-07 • release status follows the `master` branch**
+**Current public license:** GNU Affero General Public License v3.0 only (`AGPL-3.0-only`).  
+**Named copyright claimant and intended commercial licensor (operator-supplied):** **Micheal O. Ellington**, an individual operating as **Noetican Labs**, a sole proprietorship.  
+**Last updated:** 2026-11-08.
 
-## Proposed open-source license
+## Open-source AGPL rights
 
-- **AGPL-3.0-only** applies to first-party source code and documentation for which the actual copyright holder has the authority to grant this license, after adoption by the rights holder.
-- It permits commercial use, modification, redistribution, and providing services. There is **no mandatory commercial licensing fee**, revenue threshold, profit-share requirement, or field-of-use restriction under the AGPL.
-- Distributors must comply with the AGPL's license notices and corresponding-source conditions. Section 13 adds specific source-offer obligations for **modified versions** supporting remote network interaction. Do not claim that any company's mere profit, unmodified internal use, or all network access automatically triggers payment or source-disclosure obligations.
-- The AGPL grant, once made, **cannot be withdrawn from existing compliant recipients merely by changing the project license later**. Future versions may be offered under different terms by an authorized rights holder subject to the rights of other contributors.
+For source code offered by an authorized rights holder under [AGPLv3](LICENSE), all compliant users, **including commercial organizations**, may run, modify, share, and provide software services within the AGPL's conditions **without paying Noetican Labs**. AGPLv3 has specific corresponding-source duties for distribution and for modified network-interactive programs as described in its text. It does not create a mandatory royalty or revenue threshold.
 
-## Optional separate paid offerings
+An AGPL grant already made to compliant recipients cannot be unilaterally revoked through a subsequent change of project strategy.
 
-**Separate commercial copyright license:** If the actual copyright holder holds all relevant copyrights or has the necessary sublicensing authority, customers may purchase a distinct license permitting specified uses outside AGPL copyleft requirements. Pricing must be established by separate agreement.
+## Optional separately negotiated paid alternatives
 
-**Paid hosting and support:** Subscribers may purchase installation, support, customization, managed hosting, high-availability deployments, integrations, security services, updates, or contractual commitments. The AGPL itself does not require them to buy those services.
+**Micheal O. Ellington, operating as Noetican Labs**, is the named person to negotiate alternative licenses and optional paid services. Examples include licensed proprietary redistribution/embedding, custom integration, training, support and managed hosting. An alternative copyright license only covers copyrighted material he owns or has explicit permission to relicense. No different terms, pricing, royalties, exclusive rights, or sublicensing arise absent a signed agreement.
 
-**Contribution policy:** Before accepting contributions, establish a signed contributor agreement or another clearly defined inbound licensing policy if dual commercial licensing is intended. An AGPL contribution does not automatically grant the project owner the ability to relicense that contributor's code under proprietary terms.
+See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) and the [unexecuted commercial agreement template](docs/licensing/COMMERCIAL_LICENSE_AGREEMENT_TEMPLATE.md).
 
-## Scope and legacy materials
+## Rights verification and contributor governance
 
-- Existing source notices identify “CohBit” and archived release assets. The proprietor reports operating Noetican Labs as a sole proprietor, but **exact individual ownership and rights chain remain unverified**.
-- The old `Cohbit-Legal-GMI-1.0.0-hardened.zip` binary archive remains excluded pending examination of its contents, third-party material, and license notices. Do not treat the repository's general license as relicensing that archive.
-- External packages, the Lean toolchain, and other dependencies keep their own licenses and notices.
-- A source-file SPDX header is a licensing marker; it is not evidence of copyright ownership or an assignment.
+This record identifies a person and business name at the project operator's direction but is **not proof of title**, incorporation, a registered DBA, or contributor assignments. The original “CohBit” notices and “True A” commit author labels require reconciliation with actual authorship. See [COPYRIGHT.md](COPYRIGHT.md).
+
+A contribution under AGPL does not by itself authorize the maintainer to relicense its copyright under a different paid contract. Define contributor rights and an approved intake process before accepting external code intended for dual licensing. Third-party dependencies retain their respective license obligations; the old ZIP in public Git history and dependency notices still need review.
 
 ## Product qualification
 
-Open source does not mean production-ready, legally authoritative, or guaranteed to calculate correct legal conclusions. Technical assurance and independent legal-domain validation remain distinct obligations. The existing LEGAL-PROOF-001 documentation continues to control claims about demonstrated soundness.
+CohBit Legal GMI is still a Rust/Lean research prototype. The open-source license does not imply production suitability, attorney qualification, semantic accuracy on arbitrary documents, or authoritative legal-status verification. Independently validated technical and legal-domain gates remain necessary.
 
-## Preconditions for applying on master
-
-1. Identify and document the exact copyright owner(s); reconcile historic “CohBit” notices.
-2. Confirm that no former employer, contributor, or third party holds rights that prevent release under AGPL.
-3. Inventory dependencies and bundled/archive materials and preserve license obligations.
-4. Have qualified counsel review AGPL adoption and future dual-licensing rights.
-5. Approve the actual irreversible open-source grant and merge the proposal.
-6. Update any website, release, package, and Zenodo metadata only after adoption; audit for contradictory proprietary claims.
-
-Official information:
+## Verification references
 - https://www.gnu.org/licenses/agpl-3.0.en.html
-- https://www.gnu.org/licenses/gpl-faq.html
-- https://opensource.org/osd
-
-## Agreed licensing direction (business decision, not yet a release)
-On 2026-11-07 the project operator selected **AGPLv3 plus optional paid commercial licensing** and explicitly authorized merging the licensing package into `master`. This business decision does not by itself demonstrate copyright ownership, resolve third-party licensing obligations, or execute a customer agreement. Once merged, the AGPL license grant is real for covered original source code; unresolved legal due-diligence issues remain documented.
-
-The open-source license is a complete legal route to use CohBit commercially without paying. A **different, independently negotiated paid license** is offered only as an alternative for customers who prefer different copyright terms or paid services. AGPL licensees retain their AGPL rights whether or not they purchase a paid offering.
-
-### Commercial-license eligibility / contributor governance
-The operator can offer proprietary alternative terms only for copyrighted material they own or have express permission to relicense. Before accepting external code into files intended for dual licensing, establish a clear inbound-contribution policy with appropriate contributor permissions. Do not claim that a GitHub pull request silently assigns a contributor's copyrights.
-
-### Commercial offering status
-No price list, commercial order form, service level, or authorized contact address is currently adopted by this decision. The commercial licensing terms will be negotiated and executed separately with the legally identified sole proprietor; no customer is automatically obligated to pay because of revenue or profitability.
+- https://www.gnu.org/licenses/gpl-faq.en.html
+- https://www.copyright.gov/circs/circ01.pdf
