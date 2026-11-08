@@ -3,8 +3,8 @@
   "description": "A Rust and Lean research prototype for integrity-bound transition receipts and conditionally sound derivations in a fictional public-comment deadline domain. Independent legal-domain qualification remains pending; the software is not production-qualified or a legal-advice system.",
   "creators": [
     {
-      "name": "Ellington, Michael",
-      "affiliation": "NoeticanLabs"
+      "name": "Ellington, Micheal O.",
+      "affiliation": "Noetican Labs"
     }
   ],
   "access_right": "open",
