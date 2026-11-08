@@ -1,4 +1,5 @@
-// Copyright (c) 2026 CohBit. All rights reserved.
+// Copyright (c) 2026 Micheal O. Ellington, operating as Noetican Labs.
+// Historical project notice: Copyright (c) 2026 CohBit. All rights reserved.
 // SPDX-License-Identifier: AGPL-3.0-only
 use serde::{Deserialize, Serialize};
 
