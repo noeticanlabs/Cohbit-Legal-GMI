@@ -55,12 +55,18 @@ python tools/ingest_documents.py --docs-root fixtures/legal_proof_001 --document
 
 See [LEGAL-DOC-002 evidence boundaries](docs/validation/LEGAL_DOC_002_TEXT_INGESTION.md) and the [general-document research plan](docs/research/LEGAL_DOC_002_GENERAL_DOCUMENT_UNDERSTANDING.md). The Python research tests are currently **local validation**, not yet an independently attested full-system evaluation.
 
+## Maintainer and licensor identity
+
+**Micheal O. Ellington**, an individual operating as **Noetican Labs** (sole proprietorship), is the project operator's stated original-rights holder and designated commercial licensing contact. No separately incorporated Noetican Labs entity or registered trade name has been independently verified.
+
+See [COPYRIGHT.md](COPYRIGHT.md) for the ownership notice and limitations, and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for optional separately negotiated licensing.
+
 ## License and commercial options
 
 **GNU Affero General Public License v3.0 only (AGPL-3.0-only)** — see [LICENSE](LICENSE) for the terms under which the rights holder offers covered original source code. Third-party material retains its own licenses. See the [release audit](docs/licensing/RELEASE_AUDIT_2026-11-07.md) for unresolved chain-of-title and dependency-compliance evidence.
 
 Under the AGPL, users may use, study, modify, redistribute, and **commercially use** the licensed code while complying with the license. In particular, qualifying distributions and modified network-accessible versions carry corresponding-source obligations. **AGPL does not require profitable users to pay Noetican Labs.** See [OPEN_SOURCE_COMMERCIAL_MODEL.md](OPEN_SOURCE_COMMERCIAL_MODEL.md).
 
-If the copyright owner controls the necessary rights, they may separately offer negotiated **paid commercial licenses** for customers seeking different terms, plus paid integration, hosting, maintenance, and support.
+**Micheal O. Ellington, operating as Noetican Labs**, may negotiate optional **paid alternative commercial licenses**, to the extent he owns or has rights to relicense the covered code. Paid hosting, integration, support, and other services may also be offered. No alternative rights are granted without a separately executed agreement.
 
-The historical “CohBit” copyright notices are preserved pending verification of the exact individual rights owner. The legacy `Cohbit-Legal-GMI-1.0.0-hardened.zip` archive was **removed from the current tree** because its contents could not be cleared for redistribution; it remains accessible in Git history and should not be treated as part of the current licensed release. Third-party dependencies remain under their respective licenses. This repository remains a research prototype, not a production-qualified legal-advice system.
+The project operator has supplied the full name **Micheal O. Ellington**, operating as **Noetican Labs**. The historical “CohBit” notice is preserved as prior project attribution; legal ownership of all historical contributions still requires verification. The legacy `Cohbit-Legal-GMI-1.0.0-hardened.zip` archive was **removed from the current tree** because its contents could not be cleared for redistribution; it remains accessible in Git history and should not be treated as part of the current licensed release. Third-party dependencies remain under their respective licenses. This repository remains a research prototype, not a production-qualified legal-advice system.
