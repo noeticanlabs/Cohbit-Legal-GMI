@@ -1,6 +1,6 @@
 # Contributing to CohBit Legal GMI
 
-CohBit Legal GMI is planned as **AGPL-3.0-only** open-source software. We welcome independent scrutiny, reproducibility reports, and bug reports.
+CohBit Legal GMI is released under **AGPL-3.0-only** for covered first-party material. The repository operator and named optional commercial licensor is **Micheal O. Ellington**, an individual operating as **Noetican Labs**. We welcome independent scrutiny, reproducibility reports, and bug reports.
 
 **Until a contributor license / dual-licensing permissions policy is finalized, please do not submit unsolicited code patches, pull requests containing code from outside sources, or third-party materials.** Open an issue to discuss a proposed contribution first.
 
