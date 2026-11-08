@@ -3,8 +3,10 @@
 **Release audit snapshot (2026-11-07).** The project operator explicitly authorized merging AGPL-3.0-only into `master`. The AGPL license grant applies when the branch is actually merged. Several independent copyright/third-party due-diligence obligations remain **unverified**; do not describe the audit as a complete legal clearance.
 
 ## Copyright and rights — blocking
-- [ ] Verify legal owner(s) of original code and identify the legal-name spelling. Noetican Labs is presently described as a sole proprietorship, not a separate company.
-- [ ] Reconcile `Copyright (c) 2026 CohBit` with the actual individual rights owner; preserve notices unless changes are authorized.
+- [x] Record operator-supplied exact legal-name spelling: **Micheal O. Ellington**, operating as **Noetican Labs** as a sole proprietor.
+- [ ] Independently verify identity and chain of copyright title (original authorship, assignments, employment and outside contributors).
+- [x] Add the operator-stated personal copyright notice and preserve historical “CohBit” source attribution.
+- [ ] Determine actual ownership behind the previous “CohBit” notice and historical commit identities; new metadata is not an assignment.
 - [ ] Review historical commits and employed/contracted contributors for assignments and permissions.
 - [ ] Confirm the person approving the release has authority to grant AGPL to every covered first-party file.
 
@@ -20,7 +22,8 @@
 - [x] Choose **genuine OSI-compatible open source**, not BSL/source-available.
 - [x] Stage **AGPL-3.0-only** as the strong-copyleft candidate, not Apache/MIT.
 - [x] Project operator selected **AGPLv3 plus optional paid commercial licensing** and was informed that AGPL permits compliant commercial use without payment. Final rights-holder signoff to distribute remains a separate, uncompleted requirement.
-- [ ] Establish optional separately negotiated commercial licensing terms if dual licensing is desired.
+- [x] Publish a nonbinding paid commercial licensing notice and a sole-proprietor agreement template under Micheal O. Ellington.
+- [ ] Obtain legal counsel review and execute complete terms individually before asserting commercial customers have additional license rights.
 - [ ] Adopt inbound contributor permission/CLA policy before accepting contributions intended for future dual licensing.
 - [ ] Verify patent grants and any trademark implications with counsel.
 
@@ -30,6 +33,7 @@
 - [ ] Verify AGPL notices and corresponding-source obligations for any network services actually offered.
 - [x] Project operator expressly authorized the merge to `master`.
 - [ ] Obtain external counsel signoff and complete chain-of-title/third-party compliance review; this audit cannot independently establish either.
-- [ ] Confirm public GitHub displays AGPL license correctly and metadata is synchronized.
+- [x] GitHub recognized AGPL on master and the citation/Zenodo/README owner-name metadata was updated.
+- [ ] Verify post-update CI and audit historical archives, dependencies, trade-name status, and third-party rights.
 
 **Do not claim that AGPL compels a commercial royalty or creates a partnership.**
